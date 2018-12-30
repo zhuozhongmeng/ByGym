@@ -181,7 +181,7 @@ def main():
         for step in range(2000):
             #evn.render()
             #time.sleep(0.0002)
-            action = Magent.greedy(state)  # 拿到了初始状态之后，第一件事就是输入到环境中，
+            action = Magent.greedy(state)  # 拿到了初始状态之后，第一件事就是输入到环境中， Q值直接作为action输入了
             # print("shuchu",action)
             next_stste, reword, done, _ = evn.step(action)
             # 拿到下一步的状态之后，先进行存储，使用perceive函数，记录一个batch之后再开始训练
@@ -196,7 +196,7 @@ def main():
             for _ in range(50):
                 state = evn.reset()
                 for _ in range(STEP):
-                    #env.render()
+                    evn.render()
                     action = Magent.max_action(state)  # direct action for test
                     state, reward, done, _ = evn.step(action)
                     total_reward += reward
