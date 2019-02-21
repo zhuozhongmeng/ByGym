@@ -15,7 +15,7 @@ class DQN():
     # 定义一个DQN的类
 
     # 首先我们建立一个DQN的类，再首先我们为DQN设置一些超参数
-    GAMMA = 0.9
+    GAMMA = 0.9999
     INITIAL_EPSILON = 0.5
     FINAL_EPSILON = 0.01  # 小正数
     MEMORY_SIZE = 10000
@@ -51,7 +51,7 @@ class DQN():
         # init session  #tensorflow的初始化；
         self.session = tf.InteractiveSession()
         self.session.run(tf.global_variables_initializer())
-
+        self.saver = tf.train.Saver()
     # 如我理解，这里只是一个简单的relu为激活函数的两层神经网络，用了TF作为框架，直接做了训练，输入数据是当前状态。输出数据为Q值。
     # 暂时没有对这个网络对输入输出的实际意义进行深入的理解
     def creat_Q_network(self):
@@ -130,6 +130,12 @@ class DQN():
 
 
 
+    def save(self):
+        self.saver.save(self.session, 'cartpole/model.ckpt')
+        print("保存")
+
+    def reload(self):
+        self.saver.restore(self.session, 'cartpole/model.ckpt')
 
     def train_Q_network(self):
         minibatch = random.sample(self.memory, 50)
@@ -172,7 +178,7 @@ def main():
     #print("A")
     state = evn.reset()  # 拿到初始状态的参数
     # print(state)
-
+    Magent.reload()
     for i in range(EXPLORE):
         #evn.render()
         state = evn.reset()
@@ -206,6 +212,7 @@ def main():
             ave_reward = total_reward / 50
             print('episode: ', i, 'Evaluation Average Reward:', ave_reward)
             print("训练次数",Magent.traintimes,len(Magent.memory))
+            Magent.save()
             Magent.traintimes = 0
             if ave_reward >= 200:
                 break

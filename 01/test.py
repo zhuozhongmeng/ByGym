@@ -98,7 +98,7 @@ class DQN():
         self.session = tf.InteractiveSession()
         self.create_network()
         # self.create_training_method()
-        self.observe_time = 0
+        self.observe_time = 0 #研究次数，尝试次数
 
         self.merged = tf.summary.merge_all()
         self.summary_writer = tf.summary.FileWriter('/', self.session.graph)
@@ -148,9 +148,10 @@ class DQN():
 
         self.Q_value = tf.matmul(h_fc1, W_fc2) + b_fc2
         Q_action = tf.reduce_sum(tf.multiply(self.Q_value, self.action_input), reduction_indices=1)
-        self.cost = tf.reduce_mean(tf.square(self.y_input - Q_action))
+        self.cost = tf.reduce_mean(tf.square(self.y_input - Q_action)) #y_input就是回报
 
         self.optimizer = tf.train.AdamOptimizer(1e-6).minimize(self.cost)
+        #用图像直接强行识别出一个命令出来，然后通过训练调整识别出来的命令的优劣势
 
     # def create_training_method(self):
     #
@@ -185,7 +186,7 @@ class DQN():
             if done_batch[i]:
                 y_batch.append(reward_batch[i])
             else:
-                y_batch.append(reward_batch[i] + GAMMA * np.max(Q_value_batch[i]))
+                y_batch.append(reward_batch[i] + GAMMA * np.max(Q_value_batch[i])) #回报
 
         self.optimizer.run(feed_dict={
 
@@ -194,7 +195,6 @@ class DQN():
             self.y_input: y_batch
 
         })
-
 
 
 
@@ -268,8 +268,7 @@ def main():
         state_shadow = np.stack((state, state, state, state), axis=2)
 
         for step in range(STEP):
-            if episode > 3000 :
-                env.render()
+            env.render()
             action = agent.get_action(state_shadow)
 
             next_state, reward, done, _ = env.step(action)
