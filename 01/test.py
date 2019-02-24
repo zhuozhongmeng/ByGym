@@ -224,7 +224,7 @@ class DQN():
 
     def get_action(self, state_shadow):
         if self.epsilon >= FINAL_EPSILON and self.observe_time > OBSERVE_TIME:
-            self.epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / 10000
+            self.epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / 10000 #一万次之内逐渐变小
 
         action = np.zeros(self.action_dim)
         action_index = None
