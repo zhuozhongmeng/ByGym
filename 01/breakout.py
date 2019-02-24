@@ -11,7 +11,7 @@ minisize = 50
 GAMMA = 1
 
 def ImgProcess(state):
-    #第一个方式是抽取第一个层图像，等于使用
+    #第一个方式是抽取第一个层图像，等于使用灰度图
     state1 = state[32:192,0:160,0:1]
     viestate = np.sum(state,axis=2)
     small_state = cv2.resize(state1, (40, 40), interpolation=cv2.INTER_AREA)
