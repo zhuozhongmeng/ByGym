@@ -3,16 +3,20 @@ import numpy as np
 import gym as gym
 from collections import deque
 import random
+import cv2
+import time as pytime
 GAME = "Breakout-v4"
-MEMORYSIZE = 6000
-minisize = 300
+MEMORYSIZE = 100000
+minisize = 50
 GAMMA = 1
 
 def ImgProcess(state):
-    #第一个方式是抽取第一个层图像，等于使用灰度图
-    state = state[32:192,0:160,:]
-    #state = np.sum(state,axis=2)
-    return state
+    #第一个方式是抽取第一个层图像，等于使用
+    state1 = state[32:192,0:160,0:1]
+    viestate = np.sum(state,axis=2)
+    small_state = cv2.resize(state1, (40, 40), interpolation=cv2.INTER_AREA)
+    state3 = small_state[:,:,np.newaxis]
+    return state3
 
 class DQN ():
 
@@ -21,7 +25,7 @@ class DQN ():
         self.action_dim = evn.action_space.n
         self.session = tf.InteractiveSession()
         self.creat_net() #一开始就初始化，创建一个网络出来先
-
+        self.get_action_times = 0
         self.memory = deque()
         self.session = tf.InteractiveSession()
         self.session.run(tf.global_variables_initializer())
@@ -30,6 +34,9 @@ class DQN ():
         self.m_times = 0
         self.mm_reward = 1
         self.saver = tf.train.Saver()
+        self.insi = 0
+        self.training_time = 0
+        self.get_action_time = 0
     def get_weights(self, shape):
         weight = tf.truncated_normal(shape, stddev=0.01)
         return tf.Variable(weight)
@@ -39,11 +46,11 @@ class DQN ():
         return tf.Variable(bias)
 
     def creat_net(self): #创建tensorflow的图，用来直接逼出一个Q的网络价值函数
-        self.img_input = tf.placeholder(dtype=tf.float32, shape=[None,160,160,3] )
+        self.img_input = tf.placeholder(dtype=tf.float32, shape=[None,40,40,1] )
         self.y_input = tf.placeholder(dtype=tf.float32,shape=[None])
         self.action_input = tf.placeholder(dtype=tf.float32,shape=[None, self.action_dim])
 
-        w1= self.get_weights([8,8,3,32])
+        w1= self.get_weights([8,8,1,32])
         b1 = self.get_bias([32])
         h_conv1 = tf.nn.relu(tf.nn.conv2d(self.img_input,w1,[1,4,4,1],padding="SAME") + b1)
         conv1 = tf.nn.max_pool(h_conv1,[1,2,2,1],[1,2,2,1],padding="SAME")
@@ -58,9 +65,9 @@ class DQN ():
         b3 = self.get_bias([64])
         h_conv3 = tf.nn.relu(tf.nn.conv2d(h_conv2,w3,[1,1,1,1],padding="SAME") + b3)
 
-        w_fc1 = self.get_weights([1600,512])
+        w_fc1 = self.get_weights([256,512])
         b_fc1 = self.get_bias([512])
-        conv3_flat = tf.reshape(h_conv3,[-1,1600])
+        conv3_flat = tf.reshape(h_conv3,[-1,256])
         h_fc1 = tf.nn.relu(tf.matmul(conv3_flat,w_fc1) + b_fc1)
 
         w_fc2 = self.get_weights([512,self.action_dim])
@@ -70,11 +77,15 @@ class DQN ():
         Q_action = tf.reduce_sum(tf.multiply(self.Q_value,self.action_input),reduction_indices=1) #这个是动作价值函数
         self.cost = tf.reduce_mean(tf.square(self.y_input - Q_action))  #   y_input 就是最佳策略得分，就是回报，来自于马尔可夫过程结果，这里就是让输出不断的毕竟最佳策略得分
 
-        self.optimizer = tf.train.AdamOptimizer(0.0001).minimize(self.cost)
+        self.optimizer = tf.train.AdamOptimizer(0.000001).minimize(self.cost)
         print("创建了一个网络")
     def reload (self):
         self.saver.restore(self.session, 'breakout/model.ckpt')
         print("读取记忆")
+
+    def save_weight(self):
+        self.saver.save(self.session, 'breakout/model.ckpt')
+        print("训练完成并保存成功,记忆保存空间已使用",len(self.memory) * 100 / MEMORYSIZE, "%")
     def training(self):
         minibatch = random.sample(self.memory,minisize)  #这里是利用随机库，在记忆中，随机抽取一定数量minisize = 10 的记忆。然后等待下一步使用。
         mini_state =  [data[0] for data in minibatch]
@@ -99,16 +110,19 @@ class DQN ():
             self.y_input:total_Q
         })
     def get_greedy_action(self,state):
-        state = np.reshape(state,[1,160,160,3])
+        state = np.reshape(state,[1,40,40,1])
         action =  self.Q_value.eval(feed_dict={self.img_input:state})
         return action
 
-    def __text__(self):
-        print("ces")
-
     def get_action(self,state):
-        if random.random() > 0.2:
+        if self.get_action_times < 19555:
+            self.get_action_times += 1
+        random_area = 1 - self.get_action_times * 0.00005
+        if random.random() > random_area:
+            get_action_time_start  =  pytime.time()
             action = np.argmax(self.get_greedy_action(state))
+            get_action_time_end = pytime.time()
+            self.get_action_time += get_action_time_end - get_action_time_start
             self.m_times += 1
         else:
             action = random.randint(0,self.action_dim - 1)
@@ -122,24 +136,22 @@ class DQN ():
         self.get_memory_time += 1
         self.memory.append([state,action_index,next_state,reward,done,now_times])
 
-        if len(self.memory) >minisize:
+        if len(self.memory) >MEMORYSIZE:
             self.memory.popleft()
-        if self.get_memory_time % 4000 == 0:
-            print("随机次数",self.random_times,"计算次数",self.m_times,"训练占比", self.m_times / (self.m_times + self.random_times))
-            self.random_times = 0
-            self.m_times = 0
-            print("总得分",self.m_reward,"开始训练")
-            for t in range(300):
-                self.training()
-                if t % 50 == 0 :
-                    print("训练了",t,"次")
-            self.saver.save(self.session, 'breakout/model.ckpt')
-            print("训练完成并保存成功")
-            self.mm_reward = self.m_reward
-            self.m_reward = 0
+        if len(self.memory) > minisize:
+            if self.insi == 0:
+                print("试玩结束，开始训练")
+                self.insi = 1
 
+            per_training_stare = pytime.time()
+            self.training()
+            per_training_end = pytime.time()
 
-        #print("这里存储记录")
+            self.training_time += per_training_end - per_training_stare
+    def show_randomtimes(self):
+        print("总次数",self.m_times + self.random_times,"随机次数",self.random_times,"计算次数",self.m_times,"训练占比", self.m_times / (self.m_times + self.random_times))
+        self.random_times = 0
+        self.m_times = 0
 
 def  main():
     evn = gym.make(GAME)
@@ -147,9 +159,12 @@ def  main():
     agent.reload()
     init_state = evn.reset()
     init_state  = ImgProcess(init_state)
-    for times in range(100000000):
-        evn.render()
-        nowtime_reward = 0
+    done_times = 0
+    nowtime_reward = 0
+    round_time_start = pytime.time()
+    for times in range(100000000000000):
+        #evn.render() #是否显示画面
+        #nowtime_reward = 0
         if times == 0:
             state = init_state  #初始化的时候的state
 
@@ -161,11 +176,22 @@ def  main():
         agent.percieve(state,action,next_state,reward,done,times)
         state = next_state
         agent.m_reward += reward
-        if reward > nowtime_reward:
-            nowtime_reward = reward
 
         if done :
+            round_time_end = pytime.time()
+            print(done_times+1, "局累计总得分",agent.m_reward - nowtime_reward ,"训练用时", agent.training_time, "秒,判断用时", agent.get_action_time, "秒,总用时：", round_time_end - round_time_start ,"秒")
+            agent.training_time = 0
+            agent.get_action_time = 0
+            nowtime_reward = agent.m_reward
             evn.reset()
+            round_time_start = pytime.time()
+            done_times += 1
+            if done_times % 10 == 0:
+                print("本轮总计得分：", agent.m_reward)
+                agent.m_reward = 0
+                agent.save_weight()
+                agent.show_randomtimes()
+                nowtime_reward = 0
 
 if __name__ == '__main__':
 
