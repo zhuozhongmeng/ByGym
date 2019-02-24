@@ -85,7 +85,7 @@ class DQN ():
 
     def save_weight(self):
         self.saver.save(self.session, 'breakout/model.ckpt')
-        print("训练完成并保存成功,记忆保存空间已使用",len(self.memory) * 100 / MEMORYSIZE, "%")
+        print("保存成功,样本空间用量",len(self.memory) * 100 / MEMORYSIZE, "%")
     def training(self):
         minibatch = random.sample(self.memory,minisize)  #这里是利用随机库，在记忆中，随机抽取一定数量minisize = 10 的记忆。然后等待下一步使用。
         mini_state =  [data[0] for data in minibatch]
@@ -115,9 +115,9 @@ class DQN ():
         return action
 
     def get_action(self,state):
-        if self.get_action_times < 19555:
+        if self.get_action_times < 1955:
             self.get_action_times += 1
-        random_area = 1 - self.get_action_times * 0.00005
+        random_area = 1 - self.get_action_times * 0.0005
         if random.random() > random_area:
             get_action_time_start  =  pytime.time()
             action = np.argmax(self.get_greedy_action(state))
@@ -162,6 +162,8 @@ def  main():
     done_times = 0
     nowtime_reward = 0
     round_time_start = pytime.time()
+    round_reward  = 0
+    best_reward = 0
     for times in range(100000000000000):
         #evn.render() #是否显示画面
         #nowtime_reward = 0
@@ -176,23 +178,27 @@ def  main():
         agent.percieve(state,action,next_state,reward,done,times)
         state = next_state
         agent.m_reward += reward
-
+        round_reward += reward
         if done :
+            if round_reward > best_reward :
+                best_reward =  round_reward
+
             round_time_end = pytime.time()
-            print(done_times+1, "局累计总得分",agent.m_reward - nowtime_reward ,"训练用时", agent.training_time, "秒,判断用时", agent.get_action_time, "秒,总用时：", round_time_end - round_time_start ,"秒")
+            #print(done_times+1, "局累计总得分",agent.m_reward - nowtime_reward ,"训练用时", agent.training_time, "秒,判断用时", agent.get_action_time, "秒,总用时：", round_time_end - round_time_start ,"秒")
             agent.training_time = 0
             agent.get_action_time = 0
             nowtime_reward = agent.m_reward
             evn.reset()
             round_time_start = pytime.time()
             done_times += 1
+            round_reward = 0
             if done_times % 10 == 0:
-                print("本轮总计得分：", agent.m_reward)
+                print("本轮总计得分：", agent.m_reward,"分，最高单次得分",best_reward,"分")
                 agent.m_reward = 0
                 agent.save_weight()
                 agent.show_randomtimes()
                 nowtime_reward = 0
-
+                best_reward = 0
 if __name__ == '__main__':
 
         main()
