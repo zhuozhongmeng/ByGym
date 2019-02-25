@@ -11,7 +11,7 @@ MEMORYSIZE = 100000
 minisize = 50
 GAMMA = 1
 view_reward_plt = []
-
+plt.ion()
 def ImgProcess(state):
     #第一个方式是抽取第一个层图像，等于使用灰度图
     state1 = state[32:192,0:160,0:1]
@@ -196,9 +196,9 @@ def  main():
             done_times += 1
             round_reward = 0
 
-            plt.plot(range(done_times),view_reward_plt)
+            plt.plot(range(done_times),view_reward_plt,'o')
             plt.pause(0.9)
-            plt.close()
+            #plt.close()
             plt.show()
 
 
