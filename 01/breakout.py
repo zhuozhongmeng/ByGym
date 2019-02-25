@@ -11,6 +11,7 @@ MEMORYSIZE = 100000
 minisize = 50
 GAMMA = 1
 view_reward_plt = []
+view_total_reward = []
 plt.ion()
 def ImgProcess(state):
     #第一个方式是抽取第一个层图像，等于使用灰度图
@@ -184,19 +185,21 @@ def  main():
         if done :
             if round_reward > best_reward :
                 best_reward =  round_reward
-
+            done_times += 1
             round_time_end = pytime.time()
-            print(done_times+1, "局累计总得分",agent.m_reward - nowtime_reward ,"训练用时", agent.training_time, "秒,判断用时", agent.get_action_time, "秒,总用时：", round_time_end - round_time_start ,"秒")
+            #print(done_times+1, "局累计总得分",agent.m_reward - nowtime_reward ,"训练用时", agent.training_time, "秒,判断用时", agent.get_action_time, "秒,总用时：", round_time_end - round_time_start ,"秒")
             view_reward_plt.append(agent.m_reward - nowtime_reward )
+            view_total_reward.append(agent.m_reward / 10)
             agent.training_time = 0
             agent.get_action_time = 0
             nowtime_reward = agent.m_reward
             evn.reset()
             round_time_start = pytime.time()
-            done_times += 1
+
             round_reward = 0
 
             plt.plot(range(done_times),view_reward_plt,'o')
+            plt.plot(range(done_times),view_total_reward)
             plt.pause(0.9)
             #plt.close()
             plt.show()
