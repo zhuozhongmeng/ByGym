@@ -5,10 +5,12 @@ from collections import deque
 import random
 import cv2
 import time as pytime
+import matplotlib.pyplot as plt
 GAME = "Breakout-v4"
 MEMORYSIZE = 100000
 minisize = 50
 GAMMA = 1
+view_reward_plt = []
 
 def ImgProcess(state):
     #第一个方式是抽取第一个层图像，等于使用灰度图
@@ -165,7 +167,7 @@ def  main():
     round_reward  = 0
     best_reward = 0
     for times in range(100000000000000):
-        #evn.render() #是否显示画面
+        evn.render() #是否显示画面
         #nowtime_reward = 0
         if times == 0:
             state = init_state  #初始化的时候的state
@@ -184,7 +186,8 @@ def  main():
                 best_reward =  round_reward
 
             round_time_end = pytime.time()
-            #print(done_times+1, "局累计总得分",agent.m_reward - nowtime_reward ,"训练用时", agent.training_time, "秒,判断用时", agent.get_action_time, "秒,总用时：", round_time_end - round_time_start ,"秒")
+            print(done_times+1, "局累计总得分",agent.m_reward - nowtime_reward ,"训练用时", agent.training_time, "秒,判断用时", agent.get_action_time, "秒,总用时：", round_time_end - round_time_start ,"秒")
+            view_reward_plt.append(agent.m_reward - nowtime_reward )
             agent.training_time = 0
             agent.get_action_time = 0
             nowtime_reward = agent.m_reward
@@ -192,6 +195,13 @@ def  main():
             round_time_start = pytime.time()
             done_times += 1
             round_reward = 0
+
+            plt.plot(range(done_times),view_reward_plt)
+            plt.pause(0.9)
+            plt.close()
+            plt.show()
+
+
             if done_times % 10 == 0:
                 print("已完成",done_times,"局本轮总计得分：", agent.m_reward,"分，最高单次得分",best_reward,"分，")
                 agent.m_reward = 0
