@@ -85,7 +85,7 @@ class DQN ():
 
     def save_weight(self):
         self.saver.save(self.session, 'breakout/model.ckpt')
-        print("保存成功,样本空间用量",len(self.memory) * 100 / MEMORYSIZE, "%")
+        #print("保存成功,样本空间用量",len(self.memory) * 100 / MEMORYSIZE, "%")
     def training(self):
         minibatch = random.sample(self.memory,minisize)  #这里是利用随机库，在记忆中，随机抽取一定数量minisize = 10 的记忆。然后等待下一步使用。
         mini_state =  [data[0] for data in minibatch]
@@ -193,10 +193,10 @@ def  main():
             done_times += 1
             round_reward = 0
             if done_times % 10 == 0:
-                print("本轮总计得分：", agent.m_reward,"分，最高单次得分",best_reward,"分")
+                print("已完成",done_times,"局本轮总计得分：", agent.m_reward,"分，最高单次得分",best_reward,"分，")
                 agent.m_reward = 0
                 agent.save_weight()
-                agent.show_randomtimes()
+                #agent.show_randomtimes()
                 nowtime_reward = 0
                 best_reward = 0
 if __name__ == '__main__':
