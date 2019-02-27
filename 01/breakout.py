@@ -189,7 +189,10 @@ def  main():
             round_time_end = pytime.time()
             #print(done_times+1, "局累计总得分",agent.m_reward - nowtime_reward ,"训练用时", agent.training_time, "秒,判断用时", agent.get_action_time, "秒,总用时：", round_time_end - round_time_start ,"秒")
             view_reward_plt.append(agent.m_reward - nowtime_reward )
-            view_total_reward.append(agent.m_reward / 10)
+            if done_times%10 > 0:
+                view_total_reward.append(agent.m_reward / ((done_times%10)))
+            if done_times%10 == 0:
+                view_total_reward.append(agent.m_reward / 10)
             agent.training_time = 0
             agent.get_action_time = 0
             nowtime_reward = agent.m_reward
