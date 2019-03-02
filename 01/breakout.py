@@ -14,8 +14,8 @@ GAME = "Breakout-v4"
 MEMORYSIZE = 100000  # 保留样本大小
 Batch_size = 50  # 训练取样本大小
 GAMMA = 1  # 衰减率。伽马值，音译
-IMG_WIDTH = 80  # 图像宽度
-IMG_HEIGHT = 80  # 图像高度
+IMG_WIDTH = 40  # 图像宽度
+IMG_HEIGHT = 40  # 图像高度
 IMG_TIME_LONG = 4  # 图像时序长度
 SHOW_TIMES  = 0
 # init Variable 定义及初始化一些全局变量
@@ -106,9 +106,9 @@ class DQN():
         b3 = self.get_bias([64])
         h_conv3 = tf.nn.relu(tf.nn.conv2d(h_conv2, w3, [1, 1, 1, 1], padding="SAME") + b3)
         print("h_conv3.shape", h_conv3.shape)
-        w_fc1 = self.get_weights([576, 512])
+        w_fc1 = self.get_weights([256, 512])
         b_fc1 = self.get_bias([512])
-        conv3_flat = tf.reshape(h_conv3, [-1,576])
+        conv3_flat = tf.reshape(h_conv3, [-1,256])
         print("conv3_flat.shape", conv3_flat.shape)
         h_fc1 = tf.nn.relu(tf.matmul(conv3_flat, w_fc1) + b_fc1)
 
@@ -214,7 +214,7 @@ def main():
     view_best_reward=[]  #轮次最高分分布
     plt.ion()  # 设定plt的同步调试
     for times in range(100000000000000):
-        evn.render() #是否显示画面
+        #evn.render() #是否显示画面
         if times == 0:
             state = state_with_times  # 初始化的时候的state
 
@@ -234,13 +234,8 @@ def main():
                 best_reward = round_reward
             done_times += 1
             round_time_end = pytime.time()
-            print(done_times + 1, "局累计总得分", agent.m_reward - nowtime_reward, "训练用时", agent.training_time, "秒,判断用时",
-                  agent.get_action_time, "秒,总用时：", round_time_end - round_time_start, "秒")
+            print(done_times + 1, "局累计总得分", agent.m_reward - nowtime_reward, "训练用时", agent.training_time, "秒,判断用时",                  agent.get_action_time, "秒,总用时：", round_time_end - round_time_start, "秒")
 
-            #if done_times % 10 > 0:
-                #view_total_reward.append(agent.m_reward / ((done_times % 10)))
-            #if done_times % 10 == 0:
-                #view_total_reward.append(agent.m_reward / 10)
             agent.training_time = 0
             agent.get_action_time = 0
             nowtime_reward = agent.m_reward
@@ -249,17 +244,19 @@ def main():
             round_reward = 0
 
 
-            if done_times % 10 == 0:
+            if done_times % 5 == 0:
                 print("已完成", done_times, "局本轮总计得分：", agent.m_reward, "分，最高单次得分", best_reward, "分，")
                 view_total_reward.append(agent.m_reward)
                 view_best_reward.append(best_reward)
                 plt.plot(range(len(view_total_reward)), view_total_reward)
+                print(range(len(view_total_reward)),view_total_reward )
                 plt.plot(range(len(view_best_reward)), view_best_reward)
+                print(range(len(view_best_reward)), view_best_reward)
                 plt.show()
 
                 agent.m_reward = 0
                 agent.save_weight()
-                #agent.show_randomtimes()
+                agent.show_randomtimes()
                 nowtime_reward = 0
                 best_reward = 0
 
