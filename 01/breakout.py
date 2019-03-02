@@ -14,14 +14,12 @@ GAME = "Breakout-v4"
 MEMORYSIZE = 100000  # 保留样本大小
 Batch_size = 50  # 训练取样本大小
 GAMMA = 1  # 衰减率。伽马值，音译
-IMG_WIDTH = 40  # 图像宽度
-IMG_HEIGHT = 40  # 图像高度
+IMG_WIDTH = 80  # 图像宽度
+IMG_HEIGHT = 80  # 图像高度
 IMG_TIME_LONG = 4  # 图像时序长度
-
+SHOW_TIMES  = 0
 # init Variable 定义及初始化一些全局变量
-view_reward_plt = []  # 观察分数
-view_total_reward = []  # 观察最高分
-plt.ion()  # 设定plt的同步调试
+
 
 
 # -------------------------------------------------------------------------------------------------
@@ -41,22 +39,22 @@ def ImgProcess(state):
 class DQN():
 
     def __init__(self, evn):
-        self.get_memory_time = 0
         self.action_dim = evn.action_space.n
         self.session = tf.InteractiveSession()
         self.creat_net()  # 一开始就初始化，创建一个网络出来先
-        self.get_action_times = 0
         self.memory = deque()
-        self.session = tf.InteractiveSession()
         self.session.run(tf.global_variables_initializer())
-        self.m_reward = 0
-        self.random_times = 0
-        self.m_times = 0
-        self.mm_reward = 1
         self.saver = tf.train.Saver()
+
+        self.m_reward = 0
         self.insi = 0
         self.training_time = 0
         self.get_action_time = 0
+        self.get_action_times = 0
+        self.get_memory_time = 0
+        self.random_times = 0
+        self.m_times = 0
+        self.mm_reward = 1
 
     # -------------------------------------------------------------------------------------------------
 
@@ -95,19 +93,22 @@ class DQN():
         b1 = self.get_bias([32])
         h_conv1 = tf.nn.relu(tf.nn.conv2d(self.img_input, w1, [1, 4, 4, 1], padding="SAME") + b1)
         conv1 = tf.nn.max_pool(h_conv1, [1, 2, 2, 1], [1, 2, 2, 1], padding="SAME")
-        print(conv1.shape)
+        print("conv1.shape",conv1.shape)
         w2 = self.get_weights([4, 4, 32, 64])
         b2 = self.get_bias([64])
         h_conv2 = tf.nn.relu(tf.nn.conv2d(conv1, w2, [1, 2, 2, 1], padding="SAME") + b2)
+        print("h_conv2.shape",h_conv2.shape)
         h_conv2 = tf.nn.max_pool(h_conv2, [1, 2, 2, 1], [1, 2, 2, 1], padding="SAME")
+        print("h_conv2_after_max_pool.shape", h_conv2.shape)
 
         w3 = self.get_weights([3, 3, 64, 64])
         b3 = self.get_bias([64])
         h_conv3 = tf.nn.relu(tf.nn.conv2d(h_conv2, w3, [1, 1, 1, 1], padding="SAME") + b3)
-
-        w_fc1 = self.get_weights([256, 512])
+        print("h_conv3.shape", h_conv3.shape)
+        w_fc1 = self.get_weights([576, 512])
         b_fc1 = self.get_bias([512])
-        conv3_flat = tf.reshape(h_conv3, [-1,256])
+        conv3_flat = tf.reshape(h_conv3, [-1,576])
+        print("conv3_flat.shape", conv3_flat.shape)
         h_fc1 = tf.nn.relu(tf.matmul(conv3_flat, w_fc1) + b_fc1)
 
         w_fc2 = self.get_weights([512, self.action_dim])
@@ -146,11 +147,12 @@ class DQN():
             self.action_input: mini_action,
             self.y_input: total_Q
         })
+        #writer = tf.summary.FileWriter("log", self.session.graph)
 
     # -------------------------------------------------------------------------------------------------
 
     def get_greedy_action(self, state):
-        state = np.reshape(state,[1,40,40,4])
+        state = np.reshape(state,[1,IMG_WIDTH,IMG_HEIGHT,IMG_TIME_LONG])
         action = self.Q_value.eval(feed_dict={self.img_input: state})
         return action
 
@@ -198,7 +200,7 @@ class DQN():
 def main():
     evn = gym.make(GAME)
     agent = DQN(evn)
-    # agent.reload()
+    agent.reload()
     init_state = evn.reset()
     init_state = ImgProcess(init_state)
     state_with_times = np.stack((init_state, init_state, init_state, init_state), axis=2)
@@ -207,18 +209,19 @@ def main():
     round_time_start = pytime.time()
     round_reward = 0
     best_reward = 0
+    view_total_reward = []  # 观察总得分分布
+    view_best_reward=[]  #轮次最高分分布
+    plt.ion()  # 设定plt的同步调试
     for times in range(100000000000000):
-        # evn.render() #是否显示画面
-        # nowtime_reward = 0
+        evn.render() #是否显示画面
         if times == 0:
             state = state_with_times  # 初始化的时候的state
 
-        # print(evn.state_space.n)
         action = agent.get_action(state)
 
         next_state, reward, done, _ = evn.step(action)
         next_state = ImgProcess(next_state)
-        next_state = np.reshape(next_state, [40, 40, -1])
+        next_state = np.reshape(next_state, [IMG_WIDTH, IMG_HEIGHT, -1])
 
         next_state_with_times = np.append(state_with_times[:, :, 0:3], next_state, axis=2)  # 记录时序状态
         agent.percieve(state_with_times, action, next_state_with_times, reward, done, times)
@@ -232,27 +235,27 @@ def main():
             round_time_end = pytime.time()
             print(done_times + 1, "局累计总得分", agent.m_reward - nowtime_reward, "训练用时", agent.training_time, "秒,判断用时",
                   agent.get_action_time, "秒,总用时：", round_time_end - round_time_start, "秒")
-            view_reward_plt.append(agent.m_reward - nowtime_reward)
-            if done_times % 10 > 0:
-                view_total_reward.append(agent.m_reward / ((done_times % 10)))
-            if done_times % 10 == 0:
-                view_total_reward.append(agent.m_reward / 10)
+
+            #if done_times % 10 > 0:
+                #view_total_reward.append(agent.m_reward / ((done_times % 10)))
+            #if done_times % 10 == 0:
+                #view_total_reward.append(agent.m_reward / 10)
             agent.training_time = 0
             agent.get_action_time = 0
             nowtime_reward = agent.m_reward
             evn.reset()
             round_time_start = pytime.time()
-
             round_reward = 0
 
-            #plt.plot(range(done_times), view_reward_plt, 'o')
-            #plt.plot(range(done_times), view_total_reward)
-            #plt.pause(0.9)
-            # plt.close()
-            plt.show()
 
             if done_times % 10 == 0:
                 print("已完成", done_times, "局本轮总计得分：", agent.m_reward, "分，最高单次得分", best_reward, "分，")
+                view_total_reward.append(agent.m_reward)
+                view_best_reward.append(best_reward)
+                plt.plot(range(len(view_total_reward)), view_total_reward)
+                plt.plot(range(len(view_best_reward)), view_best_reward)
+                plt.show()
+
                 agent.m_reward = 0
                 agent.save_weight()
                 #agent.show_randomtimes()
