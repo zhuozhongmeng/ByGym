@@ -214,7 +214,7 @@ def main():
     view_best_reward=[]  #轮次最高分分布
     plt.ion()  # 设定plt的同步调试
     for times in range(100000000000000):
-        #evn.render() #是否显示画面
+        evn.render() #是否显示画面
         if times == 0:
             state = state_with_times  # 初始化的时候的state
 
@@ -234,7 +234,7 @@ def main():
                 best_reward = round_reward
             done_times += 1
             round_time_end = pytime.time()
-            print(done_times + 1, "局累计总得分", agent.m_reward - nowtime_reward, "训练用时", agent.training_time, "秒,判断用时",                  agent.get_action_time, "秒,总用时：", round_time_end - round_time_start, "秒")
+            print(done_times, "局累计总得分", agent.m_reward - nowtime_reward, "训练用时", agent.training_time, "秒,判断用时",                  agent.get_action_time, "秒,总用时：", round_time_end - round_time_start, "秒")
 
             agent.training_time = 0
             agent.get_action_time = 0
@@ -252,7 +252,7 @@ def main():
                 print(range(len(view_total_reward)),view_total_reward )
                 plt.plot(range(len(view_best_reward)), view_best_reward)
                 print(range(len(view_best_reward)), view_best_reward)
-                plt.show()
+                #plt.show()
 
                 agent.m_reward = 0
                 agent.save_weight()
