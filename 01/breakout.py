@@ -34,6 +34,13 @@ def ImgProcess(state):
     # 这里参考方法进行了图像的处理，调整了图像的曲线。
 
 
+def show_plt():
+    plt.plot(range(len(view_total_reward)),view_total_reward)
+    plt.plot(range(len(view_best_reward)),view_best_reward)
+    plt.pause(0.5)
+    plt.show()
+
+
 # -------------------------------------------------------------------------------------------------
 
 
@@ -84,6 +91,7 @@ class DQN():
         bias = tf.constant(0.01, shape=shape)
         return tf.Variable(bias)
 
+
     # -------------------------------------------------------------------------------------------------
 
     def creat_net(self):  # 创建tensorflow的图，用来直接逼出一个Q的网络价值函数
@@ -118,8 +126,7 @@ class DQN():
 
         self.Q_value = tf.matmul(h_fc1, w_fc2) + b_fc2  # 直到这里，拿到的只是一个图像的识别结果抽象，带action的二维矩阵 当作是价值函数
         Q_action = tf.reduce_sum(tf.multiply(self.Q_value, self.action_input), reduction_indices=1)  # 这个是动作价值函数
-        self.cost = tf.reduce_mean(
-            tf.square(self.y_input - Q_action))  # y_input 就是最佳策略得分，就是回报，来自于马尔可夫过程结果，这里就是让输出不断的毕竟最佳策略得分
+        self.cost = tf.reduce_mean(tf.square(self.y_input - Q_action))  # y_input 就是最佳策略得分，就是回报，来自于马尔可夫过程结果，这里就是让输出不断的毕竟最佳策略得分
 
         self.optimizer = tf.train.AdamOptimizer(0.000001).minimize(self.cost)
         print("创建了一个网络")
@@ -198,11 +205,6 @@ class DQN():
 
 # -------------------------------------------------------------------------------------------------
 
-def show_plt():
-    plt.plot(range(len(view_total_reward)),view_total_reward)
-    plt.plot(range(len(view_best_reward)),view_best_reward)
-    plt.pause(0.5)
-    plt.show()
 
 
 def main():
@@ -246,7 +248,7 @@ def main():
             round_reward = 0
 
 
-            if done_times % 5 == 0:
+            if done_times % 10 == 0:
                 print("已完成", done_times, "局本轮总计得分：", agent.m_reward, "分，最高单次得分", best_reward, "分，")
                 view_total_reward.append(agent.m_reward)
                 view_best_reward.append(best_reward)
