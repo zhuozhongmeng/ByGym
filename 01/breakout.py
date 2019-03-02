@@ -19,9 +19,10 @@ IMG_HEIGHT = 40  # 图像高度
 IMG_TIME_LONG = 4  # 图像时序长度
 SHOW_TIMES  = 0
 # init Variable 定义及初始化一些全局变量
+view_total_reward = []  # 观察总得分分布
+view_best_reward = []  # 轮次最高分分布
 
-
-
+plt.ion()
 # -------------------------------------------------------------------------------------------------
 
 # 定义一个图像处理方法，将图像切片变形成（40，40，1）
@@ -197,6 +198,12 @@ class DQN():
 
 # -------------------------------------------------------------------------------------------------
 
+def show_plt():
+    plt.plot(range(len(view_total_reward)),view_total_reward)
+    plt.plot(range(len(view_best_reward)),view_best_reward)
+    plt.pause(0.5)
+    plt.show()
+
 
 def main():
     evn = gym.make(GAME)
@@ -206,20 +213,16 @@ def main():
     init_state = ImgProcess(init_state)
     state_with_times = np.stack((init_state, init_state, init_state, init_state), axis=2)
     done_times = 0
-    nowtime_reward = 0
-    round_time_start = pytime.time()
     round_reward = 0
     best_reward = 0
-    view_total_reward = []  # 观察总得分分布
-    view_best_reward=[]  #轮次最高分分布
-    plt.ion()  # 设定plt的同步调试
+
+
     for times in range(100000000000000):
-        evn.render() #是否显示画面
+        #evn.render() #是否显示画面
         if times == 0:
             state = state_with_times  # 初始化的时候的state
 
         action = agent.get_action(state)
-
         next_state, reward, done, _ = evn.step(action)
         next_state = ImgProcess(next_state)
         next_state = np.reshape(next_state, [IMG_WIDTH, IMG_HEIGHT, -1])
@@ -234,11 +237,10 @@ def main():
                 best_reward = round_reward
             done_times += 1
             round_time_end = pytime.time()
-            print(done_times, "局累计总得分", agent.m_reward - nowtime_reward, "训练用时", agent.training_time, "秒,判断用时",                  agent.get_action_time, "秒,总用时：", round_time_end - round_time_start, "秒")
+            #print(done_times, "局累计总得分", agent.m_reward - nowtime_reward, "训练用时", agent.training_time, "秒,判断用时",agent.get_action_time, "秒,总用时：", round_time_end - round_time_start, "秒")
 
             agent.training_time = 0
             agent.get_action_time = 0
-            nowtime_reward = agent.m_reward
             evn.reset()
             round_time_start = pytime.time()
             round_reward = 0
@@ -248,17 +250,12 @@ def main():
                 print("已完成", done_times, "局本轮总计得分：", agent.m_reward, "分，最高单次得分", best_reward, "分，")
                 view_total_reward.append(agent.m_reward)
                 view_best_reward.append(best_reward)
-                plt.plot(range(len(view_total_reward)), view_total_reward)
-                print(range(len(view_total_reward)),view_total_reward )
-                plt.plot(range(len(view_best_reward)), view_best_reward)
-                print(range(len(view_best_reward)), view_best_reward)
-                #plt.show()
 
                 agent.m_reward = 0
                 agent.save_weight()
-                agent.show_randomtimes()
-                nowtime_reward = 0
+                #agent.show_randomtimes()
                 best_reward = 0
+                show_plt()
 
 
 if __name__ == '__main__':
