@@ -11,7 +11,7 @@ MEMORYSIZE = 100000
 minisize = 50
 GAMMA = 1
 view_reward_plt = []
-view_total_reward = []
+#view_total_reward = []
 plt.ion()
 def ImgProcess(state):
     #第一个方式是抽取第一个层图像，等于使用灰度图
@@ -121,7 +121,7 @@ class DQN ():
         if self.get_action_times < 1955:
             self.get_action_times += 1
         random_area = 1 - self.get_action_times * 0.0005
-        if random.random() > random_area:
+        if random.random() > 0.01:
             get_action_time_start  =  pytime.time()
             action = np.argmax(self.get_greedy_action(state))
             get_action_time_end = pytime.time()
@@ -165,10 +165,12 @@ def  main():
     done_times = 0
     nowtime_reward = 0
     round_time_start = pytime.time()
+    tentimes_start = pytime.time()
     round_reward  = 0
     best_reward = 0
+
     for times in range(100000000000000):
-        evn.render() #是否显示画面
+        #evn.render() #是否显示画面
         #nowtime_reward = 0
         if times == 0:
             state = init_state  #初始化的时候的state
@@ -189,7 +191,7 @@ def  main():
             round_time_end = pytime.time()
             #print(done_times+1, "局累计总得分",agent.m_reward - nowtime_reward ,"训练用时", agent.training_time, "秒,判断用时", agent.get_action_time, "秒,总用时：", round_time_end - round_time_start ,"秒")
             view_reward_plt.append(agent.m_reward - nowtime_reward )
-            view_total_reward.append(agent.m_reward / 10)
+
             agent.training_time = 0
             agent.get_action_time = 0
             nowtime_reward = agent.m_reward
@@ -198,15 +200,18 @@ def  main():
 
             round_reward = 0
 
-            plt.plot(range(done_times),view_reward_plt,'o')
-            plt.plot(range(done_times),view_total_reward)
-            plt.pause(0.9)
+            #plt.plot(range(done_times),view_reward_plt,'o')
+
+            #plt.pause(0.9)
             #plt.close()
-            plt.show()
+            #plt.show()
 
 
             if done_times % 10 == 0:
-                print("已完成",done_times,"局本轮总计得分：", agent.m_reward,"分，最高单次得分",best_reward,"分，")
+                #view_total_reward.append(agent.m_reward / 10)
+                #plt.plot(range(0,done_times,10), view_total_reward)
+                print("已完成",done_times,"局本轮总计得分：", agent.m_reward,"分，最高单次得分",best_reward,"分，用时",pytime.time() - tentimes_start)
+                tentimes_start = pytime.time()
                 agent.m_reward = 0
                 agent.save_weight()
                 #agent.show_randomtimes()

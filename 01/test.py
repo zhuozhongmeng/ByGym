@@ -268,7 +268,7 @@ def main():
         state_shadow = np.stack((state, state, state, state), axis=2)
 
         for step in range(STEP):
-            env.render()
+            #env.render()
             action = agent.get_action(state_shadow)
 
             next_state, reward, done, _ = env.step(action)
@@ -285,6 +285,7 @@ def main():
 
             if done:
                 break
+                print("rewoard", total_reward)
         #print('Episode:', episode, 'Total Point this Episode is:', total_reward)
         total_reward_decade += total_reward
         if episode % 10 == 0:
