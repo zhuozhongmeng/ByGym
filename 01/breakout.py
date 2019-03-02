@@ -198,7 +198,7 @@ class DQN():
 def main():
     evn = gym.make(GAME)
     agent = DQN(evn)
-    # agent.reload()
+    agent.reload()
     init_state = evn.reset()
     init_state = ImgProcess(init_state)
     state_with_times = np.stack((init_state, init_state, init_state, init_state), axis=2)
@@ -230,8 +230,7 @@ def main():
                 best_reward = round_reward
             done_times += 1
             round_time_end = pytime.time()
-            print(done_times + 1, "局累计总得分", agent.m_reward - nowtime_reward, "训练用时", agent.training_time, "秒,判断用时",
-                  agent.get_action_time, "秒,总用时：", round_time_end - round_time_start, "秒")
+            #print(done_times + 1, "局累计总得分", agent.m_reward - nowtime_reward, "训练用时", agent.training_time, "秒,判断用时"agent.get_action_time, "秒,总用时：", round_time_end - round_time_start, "秒")
             view_reward_plt.append(agent.m_reward - nowtime_reward)
             if done_times % 10 > 0:
                 view_total_reward.append(agent.m_reward / ((done_times % 10)))
@@ -245,8 +244,8 @@ def main():
 
             round_reward = 0
 
-            #plt.plot(range(done_times), view_reward_plt, 'o')
-            #plt.plot(range(done_times), view_total_reward)
+            plt.plot(range(done_times), view_reward_plt, 'o')
+            plt.plot(range(done_times), view_total_reward)
             #plt.pause(0.9)
             # plt.close()
             plt.show()
