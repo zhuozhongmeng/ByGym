@@ -210,7 +210,7 @@ class DQN():
 def main():
     evn = gym.make(GAME)
     agent = DQN(evn)
-    #agent.reload()
+    agent.reload()
     init_state = evn.reset()
     init_state = ImgProcess(init_state)
     state_with_times = np.stack((init_state, init_state, init_state, init_state), axis=2)
