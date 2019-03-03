@@ -68,11 +68,11 @@ class DQN():
     # -------------------------------------------------------------------------------------------------
 
     def reload(self):
-        self.saver.restore(self.session, 'breakout/model.ckpt')
+        self.saver.restore(self.session, 'breakout8080/model.ckpt')
         print("读取记忆")
 
     def save_weight(self):
-        self.saver.save(self.session, 'breakout/model.ckpt')
+        self.saver.save(self.session, 'breakout8080/model.ckpt')
         # print("保存成功,样本空间用量",len(self.memory) * 100 / MEMORYSIZE, "%")
 
     def show_randomtimes(self):
@@ -210,7 +210,7 @@ class DQN():
 def main():
     evn = gym.make(GAME)
     agent = DQN(evn)
-    agent.reload()
+    #agent.reload()
     init_state = evn.reset()
     init_state = ImgProcess(init_state)
     state_with_times = np.stack((init_state, init_state, init_state, init_state), axis=2)
@@ -229,7 +229,7 @@ def main():
         next_state = ImgProcess(next_state)
         next_state = np.reshape(next_state, [IMG_WIDTH, IMG_HEIGHT, -1])
 
-        next_state_with_times = np.append(state_with_times[:, :, 0:3], next_state, axis=2)  # 记录时序状态
+        next_state_with_times = np.append(next_state,state_with_times[:, :, 0:3],  axis=2)  # 记录时序状态
         agent.percieve(state_with_times, action, next_state_with_times, reward, done, times)
         state_with_times = next_state_with_times
         agent.m_reward += reward
@@ -255,7 +255,7 @@ def main():
 
                 agent.m_reward = 0
                 agent.save_weight()
-                #agent.show_randomtimes()
+                agent.show_randomtimes()
                 best_reward = 0
                 show_plt()
 
