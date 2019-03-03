@@ -14,8 +14,8 @@ GAME = "Breakout-v4"
 MEMORYSIZE = 100000  # 保留样本大小
 Batch_size = 50  # 训练取样本大小
 GAMMA = 1  # 衰减率。伽马值，音译
-IMG_WIDTH = 40  # 图像宽度
-IMG_HEIGHT = 40  # 图像高度
+IMG_WIDTH = 80  # 图像宽度
+IMG_HEIGHT = 80  # 图像高度
 IMG_TIME_LONG = 4  # 图像时序长度
 SHOW_TIMES  = 0
 # init Variable 定义及初始化一些全局变量
@@ -108,16 +108,16 @@ class DQN():
         b2 = self.get_bias([64])
         h_conv2 = tf.nn.relu(tf.nn.conv2d(conv1, w2, [1, 2, 2, 1], padding="SAME") + b2)
         print("h_conv2.shape",h_conv2.shape)
-        h_conv2 = tf.nn.max_pool(h_conv2, [1, 2, 2, 1], [1, 2, 2, 1], padding="SAME")
-        print("h_conv2_after_max_pool.shape", h_conv2.shape)
+        #h_conv2 = tf.nn.max_pool(h_conv2, [1, 2, 2, 1], [1, 2, 2, 1], padding="SAME")
+        #print("h_conv2_after_max_pool.shape", h_conv2.shape)
 
         w3 = self.get_weights([3, 3, 64, 64])
         b3 = self.get_bias([64])
         h_conv3 = tf.nn.relu(tf.nn.conv2d(h_conv2, w3, [1, 1, 1, 1], padding="SAME") + b3)
         print("h_conv3.shape", h_conv3.shape)
-        w_fc1 = self.get_weights([256, 512])
+        w_fc1 = self.get_weights([1600, 512])
         b_fc1 = self.get_bias([512])
-        conv3_flat = tf.reshape(h_conv3, [-1,256])
+        conv3_flat = tf.reshape(h_conv3, [-1,1600])
         print("conv3_flat.shape", conv3_flat.shape)
         h_fc1 = tf.nn.relu(tf.matmul(conv3_flat, w_fc1) + b_fc1)
 
