@@ -35,8 +35,8 @@ def ImgProcess(state):
 
 
 def show_plt():
-    plt.plot(range(len(view_total_reward)),view_total_reward)
-    plt.plot(range(len(view_best_reward)),view_best_reward)
+    plt.plot(range(len(view_total_reward)),view_total_reward,"o")
+    plt.plot(range(len(view_best_reward)),view_best_reward,"x")
     plt.pause(0.5)
     plt.show()
 
@@ -68,7 +68,7 @@ class DQN():
     # -------------------------------------------------------------------------------------------------
 
     def reload(self):
-        self.saver.restore(self.session, 'breakouttimetest/model.ckpt')
+        self.saver.restore(self.session, 'breakouttimetes/model.ckpt')
         print("读取记忆")
 
     def save_weight(self):
@@ -166,9 +166,9 @@ class DQN():
         return action
 
     def get_action(self, state):
-        if self.get_action_times < 1955:
+        if self.get_action_times < 100000:
             self.get_action_times += 1
-        random_area = 1 - self.get_action_times * 0.0005
+        random_area = 1 - self.get_action_times * 0.00001
         if random.random() > random_area:
             get_action_time_start = pytime.time()
             action = np.argmax(self.get_greedy_action(state))
@@ -229,7 +229,7 @@ def main():
         next_state = ImgProcess(next_state)
         next_state = np.reshape(next_state, [IMG_WIDTH, IMG_HEIGHT, -1])
 
-        next_state_with_times = np.append(next_state, state_with_times[:, :, 0:3], axis=2)  # 记录时序状态
+        next_state_with_times = np.append(next_state, state_with_times[ : ,  : , 0:3], axis=2)  # 记录时序状态
         agent.percieve(state_with_times, action, next_state_with_times, reward, done, times)
         state_with_times = next_state_with_times
         agent.m_reward += reward
@@ -249,7 +249,7 @@ def main():
 
 
             if done_times % 10 == 0:
-                print("已完成", done_times, "局本轮总计得分：", agent.m_reward, "分，最高单次得分", best_reward, "分，")
+                print("已完成", done_times, "局本轮总计得分：", agent.m_reward, "分，最高单次得分", best_reward, "分，",pytime.time())
                 view_total_reward.append(agent.m_reward)
                 view_best_reward.append(best_reward)
 
