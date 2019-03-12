@@ -250,7 +250,7 @@ def main():
 
 
             if done_times % 10 == 0:
-                print("已完成", done_times, "局本轮总计得分：", agent.m_reward, "分，最高单次得分", best_reward, "分，")
+                print( done_times, "局得分：", agent.m_reward, "分，最高单次得分", best_reward, "分，")
                 view_total_reward.append(agent.m_reward)
                 view_best_reward.append(best_reward)
 
