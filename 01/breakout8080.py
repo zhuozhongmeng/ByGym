@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 # set static
 GAME = "Breakout-v4"
 MEMORYSIZE = 100000  # 保留样本大小
-Batch_size = 50  # 训练取样本大小
+Batch_size = 32  # 训练取样本大小
 GAMMA = 1  # 衰减率。伽马值，音译
 IMG_WIDTH = 80  # 图像宽度
 IMG_HEIGHT = 80  # 图像高度
@@ -167,10 +167,10 @@ class DQN():
         return action
 
     def get_action(self, state):
-        if self.get_action_times < 1995:
+        if self.get_action_times < 99999999:
             self.get_action_times += 1
-        random_area = 1 - self.get_action_times * 0.0005
-        if random.random() > random_area:
+        random_area = 1 - self.get_action_times * 0.00000001
+        if random.random() > random_area/5:
             get_action_time_start = pytime.time()
             action = np.argmax(self.get_greedy_action(state))
             get_action_time_end = pytime.time()
@@ -221,14 +221,14 @@ def main():
 
 
     for times in range(100000000000000):
-        #evn.render() #是否显示画面
+        evn.render() #是否显示画面
         if times == 0:
             state = state_with_times  # 初始化的时候的state
 
         action = agent.get_action(state)
         next_state, reward, done, _ = evn.step(action)
         next_state = ImgProcess(next_state)
-        next_state = np.reshape(next_state, [IMG_WIDTH, IMG_HEIGHT, -1])
+        next_state = np.reshape(next_state, [IMG_WIDTH, IMG_HEIGHT, 1])
 
         next_state_with_times = np.append(next_state,state_with_times[:, :, 0:3],  axis=2)  # 记录时序状态
         agent.percieve(state_with_times, action, next_state_with_times, reward, done, times)
@@ -256,9 +256,9 @@ def main():
 
                 agent.m_reward = 0
                 agent.save_weight()
-                #agent.show_randomtimes()
+                agent.show_randomtimes()
                 best_reward = 0
-                show_plt()
+                #show_plt()
 
 
 if __name__ == '__main__':

@@ -31,6 +31,9 @@ STEP  = 1500
 TEST = 10
 
 
+
+
+
 class ImageProcess():
     def ColorMat2B(self, state):   # this is the function used for the game flappy bird
         height = 80
@@ -101,9 +104,23 @@ class DQN():
         self.observe_time = 0 #研究次数，尝试次数
 
         self.merged = tf.summary.merge_all()
-        self.summary_writer = tf.summary.FileWriter('/', self.session.graph)
+        self.summary_writer = tf.summary.FileWriter('/breakoutcopy/', self.session.graph)
 
         self.session.run(tf.global_variables_initializer())
+        self.saver = tf.train.Saver()
+    def reload(self):
+        self.saver.restore(self.session, 'breakoutcopy/model.ckpt')
+        print("读取记忆")
+
+    def save_weight(self):
+        self.saver.save(self.session, 'breakoutcopy/model.ckpt')
+        # print("保存成功,样本空间用量",len(self.memory) * 100 / MEMORYSIZE, "%")
+
+    def show_randomtimes(self):
+        print("总次数", self.m_times + self.random_times, "随机次数", self.random_times, "计算次数", self.m_times, "训练占比",
+              self.m_times / (self.m_times + self.random_times))
+        self.random_times = 0
+        self.m_times = 0
 
     def create_network(self):
 
@@ -195,6 +212,7 @@ class DQN():
             self.y_input: y_batch
 
         })
+        writer = tf.summary.FileWriter("log", self.session.graph)
 
 
 
@@ -261,7 +279,7 @@ def main():
 
 
     for episode in range(EPISODE):
-
+        agent.reload()
         total_reward = 0
         state = env.reset()
         state = agent.imageProcess.ColorMat2Binary(state)  # now state is a binary image of 80 * 80
@@ -293,6 +311,7 @@ def main():
             print('Decade:', episode / 10, 'Total Reward in this Decade is:', total_reward_decade)
             print('-------------')
             total_reward_decade = 0
+            agent.save_weight()
 
 
 
