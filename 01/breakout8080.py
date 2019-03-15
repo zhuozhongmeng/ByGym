@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 # set static
 GAME = "Breakout-v4"
-MEMORYSIZE = 100000  # 保留样本大小
+MEMORYSIZE = 30000  # 保留样本大小
 Batch_size = 32  # 训练取样本大小
 GAMMA = 1  # 衰减率。伽马值，音译
 IMG_WIDTH = 80  # 图像宽度
@@ -36,8 +36,8 @@ def ImgProcess(state):
 
 
 def show_plt():
-    plt.plot(range(len(view_total_reward)),view_total_reward,"o")
-    plt.plot(range(len(view_best_reward)),view_best_reward,"o")
+    plt.plot(range(len(view_total_reward)),view_total_reward,)
+    plt.plot(range(len(view_best_reward)),view_best_reward,)
     plt.pause(0.5)
     plt.show()
 
@@ -221,7 +221,7 @@ def main():
 
 
     for times in range(100000000000000):
-        evn.render() #是否显示画面
+        #evn.render() #是否显示画面
         if times == 0:
             state = state_with_times  # 初始化的时候的state
 
@@ -240,7 +240,7 @@ def main():
                 best_reward = round_reward
             done_times += 1
             round_time_end = pytime.time()
-            #print(done_times, "局累计总得分", agent.m_reward - nowtime_reward, "训练用时", agent.training_time, "秒,判断用时",agent.get_action_time, "秒,总用时：", round_time_end - round_time_start, "秒")
+            #print( "训练用时", agent.training_time, "秒,判断用时",agent.get_action_time, "秒,总用时：", round_time_end - round_time_start, "秒")
 
             agent.training_time = 0
             agent.get_action_time = 0
@@ -256,9 +256,9 @@ def main():
 
                 agent.m_reward = 0
                 agent.save_weight()
-                agent.show_randomtimes()
+                #agent.show_randomtimes()
                 best_reward = 0
-                #show_plt()
+                show_plt()
 
 
 if __name__ == '__main__':
