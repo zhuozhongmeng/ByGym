@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 # set static
 GAME = "Breakout-v4"
-MEMORYSIZE = 30000  # 保留样本大小
+MEMORYSIZE = 60000  # 保留样本大小
 Batch_size = 32  # 训练取样本大小
 GAMMA = 1  # 衰减率。伽马值，音译
 IMG_WIDTH = 80  # 图像宽度
@@ -21,14 +21,11 @@ SHOW_TIMES  = 0
 # init Variable 定义及初始化一些全局变量
 view_total_reward = []  # 观察总得分分布
 view_best_reward = []  # 轮次最高分分布
-
-plt.ion()
 # -------------------------------------------------------------------------------------------------
 
 # 定义一个图像处理方法，将图像切片变形成（40，40，1）
 def ImgProcess(state):
     state1 = state[32:192, 0:160, 0:1]  # 截取有用信息，第一个方法是抽取第一个层图像，等于使用灰度图
-    state1 = state1/256
     small_state = cv2.resize(state1, (IMG_WIDTH, IMG_HEIGHT), interpolation=cv2.INTER_AREA)  # 压缩到需要的画面大小
     # state3 = small_state[:,:,np.newaxis] #最后加一个维度，np.newaxis  新增维度。很字面的意思
     return small_state
@@ -38,9 +35,8 @@ def ImgProcess(state):
 def show_plt():
     plt.plot(range(len(view_total_reward)),view_total_reward,)
     plt.plot(range(len(view_best_reward)),view_best_reward,)
-    plt.pause(0.5)
-    plt.show()
-
+    plt.savefig("breakout8080/data.png",dpi=1000)
+    plt.close()
 
 # -------------------------------------------------------------------------------------------------
 
@@ -64,6 +60,7 @@ class DQN():
         self.random_times = 0
         self.m_times = 0
         self.mm_reward = 1
+        self.temprandomtimes = 0
         #
 
     # -------------------------------------------------------------------------------------------------
@@ -77,10 +74,11 @@ class DQN():
         # print("保存成功,样本空间用量",len(self.memory) * 100 / MEMORYSIZE, "%")
 
     def show_randomtimes(self):
-        print("总次数", self.m_times + self.random_times, "随机次数", self.random_times, "计算次数", self.m_times, "训练占比",
-              self.m_times / (self.m_times + self.random_times))
+        print("训练占比",self.m_times / (self.m_times + self.random_times))
+        self.temprandomtimes = self.m_times / (self.m_times + self.random_times)
         self.random_times = 0
         self.m_times = 0
+        return  self.temprandomtimes
 
     # -------------------------------------------------------------------------------------------------
 
@@ -250,13 +248,12 @@ def main():
 
 
             if done_times % 10 == 0:
-                print( done_times, "局得分：", agent.m_reward, "分，最高单次得分", best_reward, "分，")
+                print( done_times, "局得分：", agent.m_reward, "分，最高单次得分", best_reward, "分，训练比例",agent.show_randomtimes())
                 view_total_reward.append(agent.m_reward)
                 view_best_reward.append(best_reward)
 
                 agent.m_reward = 0
                 agent.save_weight()
-                #agent.show_randomtimes()
                 best_reward = 0
                 show_plt()
 
