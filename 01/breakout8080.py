@@ -71,7 +71,7 @@ class DQN():
 
     def save_weight(self):
         self.saver.save(self.session, 'breakout8080/model.ckpt')
-        # print("保存成功,样本空间用量",len(self.memory) * 100 / MEMORYSIZE, "%")
+        print("保存成功,样本空间用量",len(self.memory) * 100 / MEMORYSIZE, "%")
 
     def show_randomtimes(self):
         #print("训练占比",self.m_times / (self.m_times + self.random_times))
@@ -216,6 +216,7 @@ def main():
     done_times = 0
     round_reward = 0
     best_reward = 0
+    round_time_start = pytime.time()
 
 
     for times in range(100000000000000):
@@ -238,7 +239,7 @@ def main():
                 best_reward = round_reward
             done_times += 1
             round_time_end = pytime.time()
-            #print( "训练用时", agent.training_time, "秒,判断用时",agent.get_action_time, "秒,总用时：", round_time_end - round_time_start, "秒")
+
 
             agent.training_time = 0
             agent.get_action_time = 0
@@ -248,10 +249,10 @@ def main():
 
 
             if done_times % 10 == 0:
+                print("训练用时", agent.training_time, "秒,判断用时", agent.get_action_time, "秒,总用时：",round_time_end - round_time_start, "秒")
                 print( done_times, "局得分：", agent.m_reward, "分，最高单次得分", best_reward, "分，训练比例",agent.show_randomtimes())
                 view_total_reward.append(agent.m_reward)
                 view_best_reward.append(best_reward)
-
                 agent.m_reward = 0
                 agent.save_weight()
                 best_reward = 0
