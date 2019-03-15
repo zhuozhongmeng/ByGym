@@ -207,12 +207,12 @@ class DQN():
 
 
 def main():
-    evn = gym.make(GAME)
+    evn = gym.make(GAME),
     agent = DQN(evn)
     #agent.reload()
     init_state = evn.reset()
     init_state = ImgProcess(init_state)
-    state_with_times = np.stack((init_state, init_state, init_state, init_state), axis=2)
+    state_with_times = np.stack((init_state, init_state, init_state, init_state, init_state, init_state, init_state, init_state), axis=2)
     done_times = 0
     round_reward = 0
     best_reward = 0
@@ -228,7 +228,7 @@ def main():
         next_state = ImgProcess(next_state)
         next_state = np.reshape(next_state, [IMG_WIDTH, IMG_HEIGHT, 1])
 
-        next_state_with_times = np.append(next_state,state_with_times[:, :, 0:3],  axis=2)  # 记录时序状态
+        next_state_with_times = np.append(next_state,state_with_times[:, :, 0:7],  axis=2)  # 记录时序状态
         agent.percieve(state_with_times, action, next_state_with_times, reward, done, times)
         state_with_times = next_state_with_times
         agent.m_reward += reward
@@ -237,18 +237,15 @@ def main():
             if round_reward > best_reward:
                 best_reward = round_reward
             done_times += 1
-            round_time_end = pytime.time()
-            print( "训练用时", agent.training_time, "秒,判断用时",agent.get_action_time, "秒,总用时：", round_time_end - round_time_start, "秒")
-
-            agent.training_time = 0
-            agent.get_action_time = 0
             evn.reset()
-            round_time_start = pytime.time()
             round_reward = 0
-
-
             if done_times % 10 == 0:
-                print( done_times, "局得分：", agent.m_reward, "分，最高单次得分", best_reward, "分，训练比例",agent.show_randomtimes())
+                round_time_end = pytime.time()
+                print( done_times, "局得分：", agent.m_reward, "分，最高单次得分", best_reward, "分，训练比例",agent.show_randomtimes(),"训练用时", agent.training_time, "秒,判断用时", agent.get_action_time, "秒,总用时：",
+                      round_time_end - round_time_start, "秒")
+                round_time_start = pytime.time()
+                agent.training_time = 0
+                agent.get_action_time = 0
                 view_total_reward.append(agent.m_reward)
                 view_best_reward.append(best_reward)
                 agent.m_reward = 0
