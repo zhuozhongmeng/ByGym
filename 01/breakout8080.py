@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 
 # set static
 GAME = "Breakout-v4"
-MEMORYSIZE = 60000  # 保留样本大小
+MEMORYSIZE = 200000  # 保留样本大小
 Batch_size = 32  # 训练取样本大小
-GAMMA = 1  # 衰减率。伽马值，音译
+GAMMA = 0.999999  # 衰减率。伽马值，音译
 IMG_WIDTH = 80  # 图像宽度
 IMG_HEIGHT = 80  # 图像高度
 IMG_TIME_LONG = 4  # 图像时序长度
@@ -74,7 +74,7 @@ class DQN():
         # print("保存成功,样本空间用量",len(self.memory) * 100 / MEMORYSIZE, "%")
 
     def show_randomtimes(self):
-        print("训练占比",self.m_times / (self.m_times + self.random_times))
+        #print("训练占比",self.m_times / (self.m_times + self.random_times))
         self.temprandomtimes = self.m_times / (self.m_times + self.random_times)
         self.random_times = 0
         self.m_times = 0
