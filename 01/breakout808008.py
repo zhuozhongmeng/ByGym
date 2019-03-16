@@ -207,7 +207,7 @@ class DQN():
 
 
 def main():
-    evn = gym.make(GAME),
+    evn = gym.make(GAME)
     agent = DQN(evn)
     #agent.reload()
     init_state = evn.reset()
@@ -216,10 +216,10 @@ def main():
     done_times = 0
     round_reward = 0
     best_reward = 0
-
+    round_time_start = pytime.time()
 
     for times in range(100000000000000):
-        #evn.render() #是否显示画面
+        evn.render() #是否显示画面
         if times == 0:
             state = state_with_times  # 初始化的时候的state
 

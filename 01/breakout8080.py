@@ -244,7 +244,7 @@ def main():
             agent.training_time = 0
             agent.get_action_time = 0
             evn.reset()
-            round_time_start = pytime.time()
+
             round_reward = 0
 
 
@@ -253,6 +253,7 @@ def main():
                 print( done_times, "局得分：", agent.m_reward, "分，最高单次得分", best_reward, "分，训练比例",agent.show_randomtimes())
                 view_total_reward.append(agent.m_reward)
                 view_best_reward.append(best_reward)
+                round_time_start = pytime.time()
                 agent.m_reward = 0
                 agent.save_weight()
                 best_reward = 0
