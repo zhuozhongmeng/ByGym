@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 
 # set static
 GAME = "Breakout-v4"
-MEMORYSIZE = 200000  # 保留样本大小
-Batch_size = 64  # 训练取样本大小
+MEMORYSIZE = 20000  # 保留样本大小
+Batch_size = 16  # 训练取样本大小
 GAMMA = 0.999999  # 衰减率。伽马值，音译
 IMG_WIDTH = 80  # 图像宽度
 IMG_HEIGHT = 80  # 图像高度
@@ -34,8 +34,10 @@ def ImgProcess(state):
 
 def show_plt():
     plt.plot(range(len(view_total_reward)),view_total_reward,)
+    plt.savefig("breakout808008/datatotal.png", dpi=1000)
+    plt.close()
     plt.plot(range(len(view_best_reward)),view_best_reward,)
-    plt.savefig("breakout808008/data.png",dpi=1000)
+    plt.savefig("breakout808008/databest.png",dpi=1000)
     plt.close()
 
 # -------------------------------------------------------------------------------------------------
@@ -127,7 +129,7 @@ class DQN():
         Q_action = tf.reduce_sum(tf.multiply(self.Q_value, self.action_input), reduction_indices=1)  # 这个是动作价值函数
         self.cost = tf.reduce_mean(tf.square(self.y_input - Q_action))  # y_input 就是最佳策略得分，就是回报，来自于马尔可夫过程结果，这里就是让输出不断的毕竟最佳策略得分
 
-        self.optimizer = tf.train.AdamOptimizer(1e-6).minimize(self.cost)
+        self.optimizer = tf.train.AdamOptimizer(0.00001).minimize(self.cost)
         print("创建了一个网络")
 
     # -------------------------------------------------------------------------------------------------
@@ -207,16 +209,16 @@ class DQN():
 
 
 def main():
-    evn = gym.make(GAME),
+    evn = gym.make(GAME)
     agent = DQN(evn)
-    #agent.reload()
+    agent.reload()
     init_state = evn.reset()
     init_state = ImgProcess(init_state)
     state_with_times = np.stack((init_state, init_state, init_state, init_state, init_state, init_state, init_state, init_state), axis=2)
     done_times = 0
     round_reward = 0
     best_reward = 0
-
+    round_time_start = pytime.time()
 
     for times in range(100000000000000):
         #evn.render() #是否显示画面
