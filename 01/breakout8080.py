@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 
 # set static
 GAME = "Breakout-v4"
-MEMORYSIZE = 200000  # 保留样本大小
-Batch_size = 32  # 训练取样本大小
+MEMORYSIZE = 20000  # 保留样本大小
+Batch_size = 24  # 训练取样本大小
 GAMMA = 0.999999  # 衰减率。伽马值，音译
 IMG_WIDTH = 80  # 图像宽度
 IMG_HEIGHT = 80  # 图像高度
@@ -30,6 +30,26 @@ def ImgProcess(state):
     # state3 = small_state[:,:,np.newaxis] #最后加一个维度，np.newaxis  新增维度。很字面的意思
     return small_state
     # 这里参考方法进行了图像的处理，调整了图像的曲线。
+
+
+def ColorMat2Binary(state):
+    height = state.shape[0]
+    width = state.shape[1]
+    nchannel = state.shape[2]
+    sHeight = int(height * 0.5)
+    sWidth = IMG_WIDTH
+
+    state_gray = cv2.cvtColor(state, cv2.COLOR_BGR2GRAY)
+
+    _, state_binary = cv2.threshold(state_gray, 5, 255, cv2.THRESH_BINARY)
+
+    state_binarySmall = cv2.resize(state_binary, (sWidth, sHeight), interpolation=cv2.INTER_AREA)
+
+    cnn_inputImg = state_binarySmall[25:, :]
+    cnn_inputImg = cnn_inputImg.reshape((IMG_WIDTH, IMG_HEIGHT))
+
+    return cnn_inputImg
+
 
 
 def show_plt():
@@ -211,7 +231,8 @@ def main():
     agent = DQN(evn)
     agent.reload()
     init_state = evn.reset()
-    init_state = ImgProcess(init_state)
+    #init_state = ImgProcess(init_state)
+    init_state = ColorMat2Binary(init_state)
     state_with_times = np.stack((init_state, init_state, init_state, init_state), axis=2)
     done_times = 0
     round_reward = 0
@@ -226,7 +247,8 @@ def main():
 
         action = agent.get_action(state)
         next_state, reward, done, _ = evn.step(action)
-        next_state = ImgProcess(next_state)
+        #next_state1 = ImgProcess(next_state)
+        next_state = ColorMat2Binary(next_state)
         next_state = np.reshape(next_state, [IMG_WIDTH, IMG_HEIGHT, 1])
 
         next_state_with_times = np.append(next_state,state_with_times[:, :, 0:3],  axis=2)  # 记录时序状态
