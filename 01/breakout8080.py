@@ -196,7 +196,7 @@ class DQN():
         #if self.get_action_times < 999999999:
         #    self.get_action_times += 1
        # random_area = 1 - self.get_action_times * 0.000000001
-        if random.random() > 1 - self.getaction /120000:
+        if random.random() > 1 - self.getaction /100500:
             get_action_time_start = pytime.time()
             action = np.argmax(self.get_greedy_action(state))
             get_action_time_end = pytime.time()
