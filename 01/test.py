@@ -104,7 +104,7 @@ class DQN():
         self.observe_time = 0 #研究次数，尝试次数
 
         self.merged = tf.summary.merge_all()
-        self.summary_writer = tf.summary.FileWriter('/breakoutcopy/', self.session.graph)
+        #self.summary_writer = tf.summary.FileWriter('/breakoutcopy/', self.session.graph)
 
         self.session.run(tf.global_variables_initializer())
         self.saver = tf.train.Saver()
@@ -212,7 +212,7 @@ class DQN():
             self.y_input: y_batch
 
         })
-        writer = tf.summary.FileWriter("log", self.session.graph)
+        #writer = tf.summary.FileWriter("log", self.session.graph)
 
 
 
@@ -267,7 +267,7 @@ def main():
     env = gym.make(ENV_NAME)
     state_shadow = None
     next_state_shadow = None
-
+    #agent.reload()
 
     agent = DQN(env)
     total_reward_decade = 0
@@ -279,7 +279,6 @@ def main():
 
 
     for episode in range(EPISODE):
-        agent.reload()
         total_reward = 0
         state = env.reset()
         state = agent.imageProcess.ColorMat2Binary(state)  # now state is a binary image of 80 * 80
@@ -300,7 +299,7 @@ def main():
             total_reward += reward
             agent.percieve(state_shadow, action, reward, next_state_shadow, done, episode)
             state_shadow = next_state_shadow
-
+            print(step)
             if done:
                 break
                 print("rewoard", total_reward)

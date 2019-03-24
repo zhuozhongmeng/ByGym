@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 GAME = "Breakout-v4"
 MEMORYSIZE = 20000  # 保留样本大小
 Batch_size = 16  # 训练取样本大小
-GAMMA = 0.999999  # 衰减率。伽马值，音译
+GAMMA = 1  # 衰减率。伽马值，音译
 IMG_WIDTH = 80  # 图像宽度
 IMG_HEIGHT = 80  # 图像高度
 IMG_TIME_LONG = 8  # 图像时序长度
@@ -221,7 +221,7 @@ def main():
     round_time_start = pytime.time()
 
     for times in range(100000000000000):
-        #evn.render() #是否显示画面
+        evn.render() #是否显示画面
         if times == 0:
             state = state_with_times  # 初始化的时候的state
 

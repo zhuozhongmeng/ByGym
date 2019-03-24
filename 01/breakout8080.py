@@ -11,31 +11,55 @@ import matplotlib.pyplot as plt
 
 # set static
 GAME = "Breakout-v4"
-MEMORYSIZE = 200000  # 保留样本大小
+MEMORYSIZE = 100000  # 保留样本大小
 Batch_size = 32  # 训练取样本大小
-GAMMA = 0.999999  # 衰减率。伽马值，音译
+GAMMA = 1  # 衰减率。伽马值，音译
 IMG_WIDTH = 80  # 图像宽度
 IMG_HEIGHT = 80  # 图像高度
 IMG_TIME_LONG = 4  # 图像时序长度
 SHOW_TIMES  = 0
+done_time = 0
 # init Variable 定义及初始化一些全局变量
 view_total_reward = []  # 观察总得分分布
 view_best_reward = []  # 轮次最高分分布
+totalreward = 0
 # -------------------------------------------------------------------------------------------------
 
 # 定义一个图像处理方法，将图像切片变形成（40，40，1）
-def ImgProcess(state):
-    state1 = state[32:192, 0:160, 0:1]  # 截取有用信息，第一个方法是抽取第一个层图像，等于使用灰度图
-    small_state = cv2.resize(state1, (IMG_WIDTH, IMG_HEIGHT), interpolation=cv2.INTER_AREA)  # 压缩到需要的画面大小
+#def ImgProcess(state):
+    #state1 = state[32:192, 0:160, 0:1]  # 截取有用信息，第一个方法是抽取第一个层图像，等于使用灰度图
+    #small_state = cv2.resize(state1, (IMG_WIDTH, IMG_HEIGHT), interpolation=cv2.INTER_AREA)  # 压缩到需要的画面大小
     # state3 = small_state[:,:,np.newaxis] #最后加一个维度，np.newaxis  新增维度。很字面的意思
-    return small_state
+    #return small_state
     # 这里参考方法进行了图像的处理，调整了图像的曲线。
 
 
+def ColorMat2Binary(state):
+    height = state.shape[0]
+    width = state.shape[1]
+    nchannel = state.shape[2]
+    sHeight = int(height * 0.5)
+    sWidth = IMG_WIDTH
+
+    state_gray = cv2.cvtColor(state, cv2.COLOR_BGR2GRAY)
+
+    _, state_binary = cv2.threshold(state_gray, 5, 255, cv2.THRESH_BINARY)
+
+    state_binarySmall = cv2.resize(state_binary, (sWidth, sHeight), interpolation=cv2.INTER_AREA)
+
+    cnn_inputImg = state_binarySmall[25:, :]
+    cnn_inputImg = cnn_inputImg.reshape((IMG_WIDTH, IMG_HEIGHT))
+
+    return cnn_inputImg
+
+
+
 def show_plt():
-    plt.plot(range(len(view_total_reward)),view_total_reward,)
-    plt.plot(range(len(view_best_reward)),view_best_reward,)
-    plt.savefig("breakout8080/data.png",dpi=1000)
+    plt.plot(range(len(view_total_reward)),view_total_reward,'.')
+    plt.savefig("breakout8080/01total.png", dpi=1000)
+    plt.close()
+    plt.plot(range(len(view_best_reward)),view_best_reward,'.')
+    plt.savefig("breakout8080/01best.png",dpi=1000)
     plt.close()
 
 # -------------------------------------------------------------------------------------------------
@@ -61,6 +85,7 @@ class DQN():
         self.m_times = 0
         self.mm_reward = 1
         self.temprandomtimes = 0
+        self.getaction = 0
         #
 
     # -------------------------------------------------------------------------------------------------
@@ -71,7 +96,7 @@ class DQN():
 
     def save_weight(self):
         self.saver.save(self.session, 'breakout8080/model.ckpt')
-        print("保存成功,样本空间用量",len(self.memory) * 100 / MEMORYSIZE, "%")
+        #print("保存成功,样本空间用量",len(self.memory) * 100 / MEMORYSIZE, "%")
 
     def show_randomtimes(self):
         #print("训练占比",self.m_times / (self.m_times + self.random_times))
@@ -127,7 +152,7 @@ class DQN():
         Q_action = tf.reduce_sum(tf.multiply(self.Q_value, self.action_input), reduction_indices=1)  # 这个是动作价值函数
         self.cost = tf.reduce_mean(tf.square(self.y_input - Q_action))  # y_input 就是最佳策略得分，就是回报，来自于马尔可夫过程结果，这里就是让输出不断的毕竟最佳策略得分
 
-        self.optimizer = tf.train.AdamOptimizer(0.000001).minimize(self.cost)
+        self.optimizer = tf.train.AdamOptimizer(1e-6).minimize(self.cost)
         print("创建了一个网络")
 
     # -------------------------------------------------------------------------------------------------
@@ -165,10 +190,13 @@ class DQN():
         return action
 
     def get_action(self, state):
-        if self.get_action_times < 99999999:
-            self.get_action_times += 1
-        random_area = 1 - self.get_action_times * 0.00000001
-        if random.random() > random_area/5:
+        self.getaction += 1
+        if self.getaction > 100000:
+            self.getaction = 100000
+        #if self.get_action_times < 999999999:
+        #    self.get_action_times += 1
+       # random_area = 1 - self.get_action_times * 0.000000001
+        if random.random() > 1 - self.getaction /120000:
             get_action_time_start = pytime.time()
             action = np.argmax(self.get_greedy_action(state))
             get_action_time_end = pytime.time()
@@ -210,53 +238,53 @@ def main():
     evn = gym.make(GAME)
     agent = DQN(evn)
     agent.reload()
-    init_state = evn.reset()
-    init_state = ImgProcess(init_state)
-    state_with_times = np.stack((init_state, init_state, init_state, init_state), axis=2)
-    done_times = 0
     round_reward = 0
     best_reward = 0
-    round_time_start = pytime.time()
+    round_10_reward = 0
+    round_time_start = pytime.time()  # --------------------------------------------获取本局开始时间
 
 
-    for times in range(100000000000000):
-        #evn.render() #是否显示画面
-        if times == 0:
-            state = state_with_times  # 初始化的时候的state
+    for rounds in range(100000000000000):
 
-        action = agent.get_action(state)
-        next_state, reward, done, _ = evn.step(action)
-        next_state = ImgProcess(next_state)
-        next_state = np.reshape(next_state, [IMG_WIDTH, IMG_HEIGHT, 1])
-
-        next_state_with_times = np.append(next_state,state_with_times[:, :, 0:3],  axis=2)  # 记录时序状态
-        agent.percieve(state_with_times, action, next_state_with_times, reward, done, times)
-        state_with_times = next_state_with_times
-        agent.m_reward += reward
-        round_reward += reward
-        if done:
-            if round_reward > best_reward:
-                best_reward = round_reward
-            done_times += 1
-            round_time_end = pytime.time()
+        state = evn.reset()
+        state = ColorMat2Binary(state)
+        state_with_4times = np.stack((state, state, state, state), axis=2)
+        for times in range(100000):
+            #print("start",times)
+            evn.render() #是否显示画面
+            action = agent.get_action(state_with_4times)
+            next_state, reward, done, _ = evn.step(action)
+            next_state = ColorMat2Binary(next_state)
+            next_state = np.reshape(next_state, [IMG_WIDTH, IMG_HEIGHT, 1])
+            next_state_with_4times = np.append(next_state,state_with_4times[:, :, 0:3],  axis=2)  # 记录时序状态
+            agent.percieve(state_with_4times, action, next_state_with_4times, reward, done, times)
+            state_with_4times = next_state_with_4times #更新输入状态
+            round_reward += reward
+            round_10_reward += reward
 
 
-            agent.training_time = 0
-            agent.get_action_time = 0
-            evn.reset()
-            round_time_start = pytime.time()
-            round_reward = 0
+            if done:
+                if round_reward > best_reward:
+                    best_reward = round_reward
 
+                #print(rounds,"局得分", round_reward,"分|有",times,'次动作')
+                round_reward = 0
 
-            if done_times % 10 == 0:
-                print("训练用时", agent.training_time, "秒,判断用时", agent.get_action_time, "秒,总用时：",round_time_end - round_time_start, "秒")
-                print( done_times, "局得分：", agent.m_reward, "分，最高单次得分", best_reward, "分，训练比例",agent.show_randomtimes())
-                view_total_reward.append(agent.m_reward)
-                view_best_reward.append(best_reward)
-                agent.m_reward = 0
-                agent.save_weight()
-                best_reward = 0
-                show_plt()
+                if rounds % 10 == 0:
+                    round_time_end = pytime.time()  # ------------------------------------------获取本局结束时间
+                    print(rounds, "局得分：", round_10_reward, "分，最高", best_reward, "分，训练",
+                          agent.show_randomtimes(), "%，用时", agent.training_time, "秒,判断用", agent.get_action_time, "秒,总用：",
+                          round_time_end - round_time_start, "秒")
+                    view_total_reward.append(round_10_reward)
+                    view_best_reward.append(best_reward)
+                    round_10_reward = 0
+                    agent.save_weight()
+                    best_reward = 0
+                    show_plt()
+                    agent.get_action_time = 0
+                    agent.training_time = 0
+                    round_time_start = pytime.time()  # --------------------------------------------获取本局开始时间
+                break
 
 
 if __name__ == '__main__':
