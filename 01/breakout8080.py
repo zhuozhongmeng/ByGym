@@ -8,10 +8,10 @@ import random
 import cv2
 import time as pytime
 import matplotlib.pyplot as plt
-
+import datetime
 # set static
 GAME = "Breakout-v4"
-MEMORYSIZE = 100000  # 保留样本大小
+MEMORYSIZE = 50000  # 保留样本大小
 Batch_size = 32  # 训练取样本大小
 GAMMA = 1  # 衰减率。伽马值，音译
 IMG_WIDTH = 80  # 图像宽度
@@ -56,10 +56,10 @@ def ColorMat2Binary(state):
 
 def show_plt():
     plt.plot(range(len(view_total_reward)),view_total_reward,'.')
-    plt.savefig("breakout8080/01total.png", dpi=1000)
+    plt.savefig("breakout8080/031total.png", dpi=1000)
     plt.close()
     plt.plot(range(len(view_best_reward)),view_best_reward,'.')
-    plt.savefig("breakout8080/01best.png",dpi=1000)
+    plt.savefig("breakout8080/03best.png",dpi=1000)
     plt.close()
 
 # -------------------------------------------------------------------------------------------------
@@ -191,12 +191,12 @@ class DQN():
 
     def get_action(self, state):
         self.getaction += 1
-        if self.getaction > 100000:
-            self.getaction = 100000
+        if self.getaction > 10000:
+            self.getaction = 10000
         #if self.get_action_times < 999999999:
         #    self.get_action_times += 1
        # random_area = 1 - self.get_action_times * 0.000000001
-        if random.random() > 1 - self.getaction /100500:
+        if random.random() > 1 - self.getaction /10001:
             get_action_time_start = pytime.time()
             action = np.argmax(self.get_greedy_action(state))
             get_action_time_end = pytime.time()
@@ -235,6 +235,7 @@ class DQN():
 
 
 def main():
+    print(datetime.datetime.now())
     evn = gym.make(GAME)
     agent = DQN(evn)
     agent.reload()
@@ -247,11 +248,12 @@ def main():
     for rounds in range(100000000000000):
 
         state = evn.reset()
+        print("reset",datetime.datetime.now())
         state = ColorMat2Binary(state)
         state_with_4times = np.stack((state, state, state, state), axis=2)
         for times in range(100000):
             #print("start",times)
-            evn.render() #是否显示画面
+            #evn.render() #是否显示画面
             action = agent.get_action(state_with_4times)
             next_state, reward, done, _ = evn.step(action)
             next_state = ColorMat2Binary(next_state)
@@ -266,15 +268,15 @@ def main():
             if done:
                 if round_reward > best_reward:
                     best_reward = round_reward
-
-                #print(rounds,"局得分", round_reward,"分|有",times,'次动作')
+                #print(done)
+                print(rounds,"局得分", round_reward,"分|有",times,'次动作')
                 round_reward = 0
 
                 if rounds % 10 == 0:
                     round_time_end = pytime.time()  # ------------------------------------------获取本局结束时间
                     print(rounds, "局得分：", round_10_reward, "分，最高", best_reward, "分，训练",
-                          agent.show_randomtimes(), "%，用时", agent.training_time, "秒,判断用", agent.get_action_time, "秒,总用：",
-                          round_time_end - round_time_start, "秒")
+                          agent.show_randomtimes(), "，用时", agent.training_time, "秒,判断用", agent.get_action_time, "秒,总用：",
+                          round_time_end - round_time_start, "秒,memoryusing",len(agent.memory),datetime.datetime.now())
                     view_total_reward.append(round_10_reward)
                     view_best_reward.append(best_reward)
                     round_10_reward = 0
