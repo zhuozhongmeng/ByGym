@@ -56,10 +56,10 @@ def ColorMat2Binary(state):
 
 def show_plt():
     plt.plot(range(len(view_total_reward)),view_total_reward,'.')
-    plt.savefig("breakout8080/031total.png", dpi=1000)
+    plt.savefig("breakout8080/041total.png", dpi=1000)
     plt.close()
     plt.plot(range(len(view_best_reward)),view_best_reward,'.')
-    plt.savefig("breakout8080/03best.png",dpi=1000)
+    plt.savefig("breakout8080/04best.png",dpi=1000)
     plt.close()
 
 # -------------------------------------------------------------------------------------------------
@@ -86,7 +86,7 @@ class DQN():
         self.mm_reward = 1
         self.temprandomtimes = 0
         self.getaction = 0
-        #
+        self.nowreward = 0
 
     # -------------------------------------------------------------------------------------------------
 
@@ -196,7 +196,7 @@ class DQN():
         #if self.get_action_times < 999999999:
         #    self.get_action_times += 1
        # random_area = 1 - self.get_action_times * 0.000000001
-        if random.random() > 1 - self.getaction /10001:
+        if random.random() > 1 - (self.getaction + self.nowreward /10) /10301:
             get_action_time_start = pytime.time()
             action = np.argmax(self.get_greedy_action(state))
             get_action_time_end = pytime.time()
@@ -248,7 +248,7 @@ def main():
     for rounds in range(100000000000000):
 
         state = evn.reset()
-        print("reset",datetime.datetime.now())
+        #print("reset",datetime.datetime.now())
         state = ColorMat2Binary(state)
         state_with_4times = np.stack((state, state, state, state), axis=2)
         for times in range(100000):
@@ -269,7 +269,7 @@ def main():
                 if round_reward > best_reward:
                     best_reward = round_reward
                 #print(done)
-                print(rounds,"局得分", round_reward,"分|有",times,'次动作')
+                print(rounds,"局得分", round_reward,'|',round_10_reward,"分|有",times,'次动作',datetime.datetime.now())
                 round_reward = 0
 
                 if rounds % 10 == 0:
@@ -279,6 +279,7 @@ def main():
                           round_time_end - round_time_start, "秒,memoryusing",len(agent.memory),datetime.datetime.now())
                     view_total_reward.append(round_10_reward)
                     view_best_reward.append(best_reward)
+                    agent.nowreward = round_10_reward
                     round_10_reward = 0
                     agent.save_weight()
                     best_reward = 0
