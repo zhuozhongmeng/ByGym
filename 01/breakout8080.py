@@ -19,6 +19,7 @@ IMG_HEIGHT = 80  # 图像高度
 IMG_TIME_LONG = 4  # 图像时序长度
 SHOW_TIMES  = 0
 done_time = 0
+times_list=[]#times every round
 # init Variable 定义及初始化一些全局变量
 view_total_reward = []  # 观察总得分分布
 view_best_reward = []  # 轮次最高分分布
@@ -60,6 +61,8 @@ def show_plt():
     plt.close()
     plt.plot(range(len(view_best_reward)),view_best_reward,'.')
     plt.savefig("breakout8080/04best.png",dpi=1000)
+    plt.plot(range(len(times_list)), times_list, '.')
+    plt.savefig("breakout8080/04timeslist.png", dpi=1000)
     plt.close()
 
 # -------------------------------------------------------------------------------------------------
@@ -196,7 +199,7 @@ class DQN():
         #if self.get_action_times < 999999999:
         #    self.get_action_times += 1
        # random_area = 1 - self.get_action_times * 0.000000001
-        if random.random() > 1 - (self.getaction + self.nowreward /10) /10301:
+        if random.random() > 1 - (self.getaction + self.nowreward /100) /10031:
             get_action_time_start = pytime.time()
             action = np.argmax(self.get_greedy_action(state))
             get_action_time_end = pytime.time()
@@ -251,9 +254,9 @@ def main():
         #print("reset",datetime.datetime.now())
         state = ColorMat2Binary(state)
         state_with_4times = np.stack((state, state, state, state), axis=2)
-        for times in range(100000):
+        for times in range(3000):
             #print("start",times)
-            #evn.render() #是否显示画面
+            evn.render() #是否显示画面
             action = agent.get_action(state_with_4times)
             next_state, reward, done, _ = evn.step(action)
             next_state = ColorMat2Binary(next_state)
@@ -270,6 +273,7 @@ def main():
                     best_reward = round_reward
                 #print(done)
                 print(rounds,"局得分", round_reward,'|',round_10_reward,"分|有",times,'次动作',datetime.datetime.now())
+                times_list.append(times)
                 round_reward = 0
 
                 if rounds % 10 == 0:
