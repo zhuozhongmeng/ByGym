@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import datetime
 # set static
 GAME = "Breakout-v4"
-MEMORYSIZE = 50000  # 保留样本大小
+MEMORYSIZE = 100000  # 保留样本大小
 Batch_size = 32  # 训练取样本大小
 GAMMA = 1  # 衰减率。伽马值，音译
 IMG_WIDTH = 80  # 图像宽度
@@ -57,13 +57,13 @@ def ColorMat2Binary(state):
 
 def show_plt():
     plt.plot(range(len(view_total_reward)),view_total_reward,'.')
-    plt.savefig("breakout8080/051total.png", dpi=1000)
+    plt.savefig("breakout8080/10round1.png", dpi=1000)
     plt.close()
     plt.plot(range(len(view_best_reward)),view_best_reward,'.')
-    plt.savefig("breakout8080/05best.png",dpi=1000)
+    plt.savefig("breakout8080/best1.png",dpi=1000)
     plt.close()
     plt.plot(range(len(times_list)), times_list, '.')
-    plt.savefig("breakout8080/05timeslist.png", dpi=1000)
+    plt.savefig("breakout8080/timeslist1.png", dpi=1000)
     plt.close()
 
 # -------------------------------------------------------------------------------------------------
@@ -190,8 +190,10 @@ class DQN():
 
     def get_greedy_action(self, state):
         state = np.reshape(state,[1,IMG_WIDTH,IMG_HEIGHT,IMG_TIME_LONG])
-        action = self.Q_value.eval(feed_dict={self.img_input: state})
-        return action
+        action = self.Q_value.eval(feed_dict={self.img_input: state})[0]
+        print("action",action,np.argmax(action))
+        print("no[0]",self.Q_value.eval(feed_dict={self.img_input: state}),np.argmax(self.Q_value.eval(feed_dict={self.img_input: state})))
+        return np.argmax(action)
 
     def get_action(self, state):
         self.getaction += 1
