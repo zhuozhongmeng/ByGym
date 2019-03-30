@@ -193,8 +193,8 @@ class DQN():
     # -------------------------------------------------------------------------------------------------
 
     def get_greedy_action(self, state):
-        state = np.reshape(state,[1,IMG_WIDTH,IMG_HEIGHT,IMG_TIME_LONG])
-        action = self.Q_value.eval(feed_dict={self.img_input: state})[0]
+        #state = np.reshape(state,[1,IMG_WIDTH,IMG_HEIGHT,IMG_TIME_LONG])
+        action = self.Q_value.eval(feed_dict={self.img_input: [state]})[0]
         print(np.argmax(action),end="")
         #print("no[0]",self.Q_value.eval(feed_dict={self.img_input: state}),np.argmax(self.Q_value.eval(feed_dict={self.img_input: state})))
         return np.argmax(action)
@@ -268,7 +268,7 @@ def main():
             action = agent.get_action(state_with_4times)
             next_state, reward, done, _ = evn.step(action)
             next_state = ColorMat2Binary(next_state)
-            next_state = np.reshape(next_state, (IMG_WIDTH, IMG_HEIGHT, 1))
+            next_state = np.reshape(next_state, [IMG_WIDTH, IMG_HEIGHT, 1])
             next_state_with_4times = np.append(next_state,state_with_4times[:, :, :3],  axis=2)  # 记录时序状态
             agent.percieve(state_with_4times, action, next_state_with_4times, reward, done, times)
             state_with_4times = next_state_with_4times #更新输入状态
