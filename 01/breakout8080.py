@@ -11,27 +11,31 @@ import matplotlib.pyplot as plt
 import datetime
 # set static
 GAME = "Breakout-v4"
-MEMORYSIZE = 100000  # 保留样本大小
+MEMORYSIZE = 50000  # 保留样本大小
 Batch_size = 32  # 训练取样本大小
-GAMMA = 1  # 衰减率。伽马值，音译
+GAMMA = 0.99  # 衰减率。伽马值，音译
 IMG_WIDTH = 80  # 图像宽度
 IMG_HEIGHT = 80  # 图像高度
+IMG_DEPTH = 1 #图像深度
 IMG_TIME_LONG = 4  # 图像时序长度
-SHOW_TIMES  = 0
-done_time = 0
-times_list=[]#times every round
+INI_EPSILON = 1 #初始随机探索比例
+FINAL_EPSILON = 0.0001 #最终随机探索比例
+OBSEVER_TIMES = 500 #一开始随便玩的次数
+TIMES_PER_ROUNDS = 1500 #限制每局最高动作数
+totalreward = 0
 # init Variable 定义及初始化一些全局变量
 view_total_reward = []  # 观察总得分分布
 view_best_reward = []  # 轮次最高分分布
-totalreward = 0
+times_list=[]   #每局动作次数分布
+
 # -------------------------------------------------------------------------------------------------
 
 # 定义一个图像处理方法，将图像切片变形成（40，40，1）
-#def ImgProcess(state):
-    #state1 = state[32:192, 0:160, 0:1]  # 截取有用信息，第一个方法是抽取第一个层图像，等于使用灰度图
-    #small_state = cv2.resize(state1, (IMG_WIDTH, IMG_HEIGHT), interpolation=cv2.INTER_AREA)  # 压缩到需要的画面大小
-    # state3 = small_state[:,:,np.newaxis] #最后加一个维度，np.newaxis  新增维度。很字面的意思
-    #return small_state
+def ImgProcess(state):
+    state1 = state[32:192, 0:160, 0:1]  # 截取有用信息，第一个方法是抽取第一个层图像，等于使用灰度图
+    small_state = cv2.resize(state1, (IMG_WIDTH, IMG_HEIGHT), interpolation=cv2.INTER_AREA)  # 压缩到需要的画面大小
+    state3 = small_state[:,:,np.newaxis] #最后加一个维度，np.newaxis  新增维度。很字面的意思
+    return small_state
     # 这里参考方法进行了图像的处理，调整了图像的曲线。
 
 
@@ -191,8 +195,8 @@ class DQN():
     def get_greedy_action(self, state):
         state = np.reshape(state,[1,IMG_WIDTH,IMG_HEIGHT,IMG_TIME_LONG])
         action = self.Q_value.eval(feed_dict={self.img_input: state})[0]
-        print("action",action,np.argmax(action))
-        print("no[0]",self.Q_value.eval(feed_dict={self.img_input: state}),np.argmax(self.Q_value.eval(feed_dict={self.img_input: state})))
+        print(np.argmax(action),end="")
+        #print("no[0]",self.Q_value.eval(feed_dict={self.img_input: state}),np.argmax(self.Q_value.eval(feed_dict={self.img_input: state})))
         return np.argmax(action)
 
     def get_action(self, state):
@@ -224,7 +228,7 @@ class DQN():
 
         if len(self.memory) > MEMORYSIZE:
             self.memory.popleft()
-        if len(self.memory) > Batch_size:
+        if len(self.memory) > OBSEVER_TIMES:
             if self.insi == 0:
                 print("试玩结束，开始训练")
                 self.insi = 1
@@ -257,14 +261,14 @@ def main():
         #print("reset",datetime.datetime.now())
         state = ColorMat2Binary(state)
         state_with_4times = np.stack((state, state, state, state), axis=2)
-        for times in range(2500):
+        for times in range(TIMES_PER_ROUNDS):
             #print("start",times)
             evn.render() #是否显示画面
             action = agent.get_action(state_with_4times)
             next_state, reward, done, _ = evn.step(action)
             next_state = ColorMat2Binary(next_state)
             next_state = np.reshape(next_state, [IMG_WIDTH, IMG_HEIGHT, 1])
-            next_state_with_4times = np.append(next_state,state_with_4times[:, :, 0:3],  axis=2)  # 记录时序状态
+            next_state_with_4times = np.append(next_state,state_with_4times[:, :, :3],  axis=2)  # 记录时序状态
             agent.percieve(state_with_4times, action, next_state_with_4times, reward, done, times)
             state_with_4times = next_state_with_4times #更新输入状态
             round_reward += reward
@@ -276,7 +280,7 @@ def main():
 
         if round_reward > best_reward:
             best_reward = round_reward
-        #print(done)
+        print(done)
         print(rounds,"局得分", round_reward,'|',round_10_reward,"分|有",times,'次动作',datetime.datetime.now())
         times_list.append(times)
         round_reward = 0
