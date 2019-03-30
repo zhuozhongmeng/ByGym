@@ -253,7 +253,8 @@ def main():
     best_reward = 0
     round_10_reward = 0
     round_time_start = pytime.time()  # --------------------------------------------获取本局开始时间
-
+    state_with_4times = None
+    state_with_4times = None
 
     for rounds in range(100000000000000):
 
@@ -267,7 +268,7 @@ def main():
             action = agent.get_action(state_with_4times)
             next_state, reward, done, _ = evn.step(action)
             next_state = ColorMat2Binary(next_state)
-            next_state = np.reshape(next_state, [IMG_WIDTH, IMG_HEIGHT, 1])
+            next_state = np.reshape(next_state, (IMG_WIDTH, IMG_HEIGHT, 1))
             next_state_with_4times = np.append(next_state,state_with_4times[:, :, :3],  axis=2)  # 记录时序状态
             agent.percieve(state_with_4times, action, next_state_with_4times, reward, done, times)
             state_with_4times = next_state_with_4times #更新输入状态
