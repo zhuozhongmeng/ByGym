@@ -195,7 +195,8 @@ class DQN():
     def get_greedy_action(self, state):
         #state = np.reshape(state,[1,IMG_WIDTH,IMG_HEIGHT,IMG_TIME_LONG])
         action = self.Q_value.eval(feed_dict={self.img_input: [state]})[0]
-        print(np.argmax(action),end="")
+        #print(action,np.argmax(action))
+        argmaxaction = np.argmax(action)
         #print("no[0]",self.Q_value.eval(feed_dict={self.img_input: state}),np.argmax(self.Q_value.eval(feed_dict={self.img_input: state})))
         return np.argmax(action)
 
@@ -208,7 +209,7 @@ class DQN():
        # random_area = 1 - self.get_action_times * 0.000000001
         if random.random() > 1 - (self.getaction + self.nowreward /100) /10031:
             get_action_time_start = pytime.time()
-            action = np.argmax(self.get_greedy_action(state))
+            action = self.get_greedy_action(state)
             get_action_time_end = pytime.time()
             self.get_action_time += get_action_time_end - get_action_time_start
             self.m_times += 1
@@ -248,6 +249,7 @@ def main():
     print(datetime.datetime.now())
     evn = gym.make(GAME)
     agent = DQN(evn)
+    print(evn.action_space)
     agent.reload()
     round_reward = 0
     best_reward = 0
@@ -266,7 +268,9 @@ def main():
             #print("start",times)
             evn.render() #是否显示画面
             action = agent.get_action(state_with_4times)
+            #print("action",action,agent.get_action(state_with_4times))
             next_state, reward, done, _ = evn.step(action)
+            #print(next_state, reward, done, _ )
             next_state = ColorMat2Binary(next_state)
             next_state = np.reshape(next_state, [IMG_WIDTH, IMG_HEIGHT, 1])
             next_state_with_4times = np.append(next_state,state_with_4times[:, :, :3],  axis=2)  # 记录时序状态

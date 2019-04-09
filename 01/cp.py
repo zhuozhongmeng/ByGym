@@ -178,7 +178,7 @@ def main():
     #print("A")
     state = evn.reset()  # 拿到初始状态的参数
     # print(state)
-    Magent.reload()
+    #Magent.reload()
     for i in range(EXPLORE):
         #evn.render()
         state = evn.reset()
@@ -212,7 +212,7 @@ def main():
             ave_reward = total_reward / 50
             print('episode: ', i, 'Evaluation Average Reward:', ave_reward)
             print("训练次数",Magent.traintimes,len(Magent.memory))
-            Magent.save()
+            #Magent.save()
             Magent.traintimes = 0
             if ave_reward >= 200:
                 break
