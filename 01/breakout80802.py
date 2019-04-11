@@ -27,36 +27,51 @@ totalreward = 0
 view_total_reward = []  # 观察总得分分布
 view_best_reward = []  # 轮次最高分分布
 times_list=[]   #每局动作次数分布
-
+CNN_INPUT_WIDTH = 80
+CNN_INPUT_HEIGHT = 80
+CNN_INPUT_DEPTH = 1
+SERIES_LENGTH = 4
 # -------------------------------------------------------------------------------------------------
 
 # 定义一个图像处理方法，将图像切片变形成（40，40，1）
-def ImgProcess(state):
-    state1 = state[32:192, 0:160, 0:1]  # 截取有用信息，第一个方法是抽取第一个层图像，等于使用灰度图
-    small_state = cv2.resize(state1, (IMG_WIDTH, IMG_HEIGHT), interpolation=cv2.INTER_AREA)  # 压缩到需要的画面大小
-    state3 = small_state[:,:,np.newaxis] #最后加一个维度，np.newaxis  新增维度。很字面的意思
-    return small_state
-    # 这里参考方法进行了图像的处理，调整了图像的曲线。
+def ColorMat2B(self, state):  ##used for the game flappy bird
+    height = 80
+    width = 80
+    state_gray = cv2.cvtColor(cv2.resize(state, (height, width)), cv2.COLOR_BGR2GRAY)
+    _, state_binary = cv2.threshold(state_gray, 5, 255, cv2.THRESH_BINARY)
+    state_binarySmall = cv2.resize(state_binary, (width, height))
+    cnn_inputImage = state_binarySmall.reshapeh((height, width))
+    return cnn_inputImage
 
 
 def ColorMat2Binary(state):
+    # state_output = tf.image.rgb_to_grayscale(state_input)
+    # state_output = tf.image.crop_to_bounding_box(state_output,34,0,160,160)
+    # state_output = tf.image.resize_images(state_output,80,80,method=tf.image.ResizeMethod.NEAREST_NEIGHBOR )
+    # state_output = tf.squeeze(state_output)
+    # return state_output
+
     height = state.shape[0]
     width = state.shape[1]
     nchannel = state.shape[2]
+
     sHeight = int(height * 0.5)
-    sWidth = IMG_WIDTH
+    sWidth = CNN_INPUT_WIDTH
 
     state_gray = cv2.cvtColor(state, cv2.COLOR_BGR2GRAY)
+    # print state_gray.shape
+    # cv2.imshow('test2',state_gray)
+    # cv2.waitkey(0)
 
     _, state_binary = cv2.threshold(state_gray, 5, 255, cv2.THRESH_BINARY)
 
     state_binarySmall = cv2.resize(state_binary, (sWidth, sHeight), interpolation=cv2.INTER_AREA)
 
     cnn_inputImg = state_binarySmall[25:, :]
-    cnn_inputImg = cnn_inputImg.reshape((IMG_WIDTH, IMG_HEIGHT))
+    # rstArray = state_graySmall.reshape(swidth * sHeight )
+    cnn_inputImg = cnn_inputImg.reshape((CNN_INPUT_WIDTH, CNN_INPUT_HEIGHT))
 
     return cnn_inputImg
-
 
 
 def show_plt():
@@ -127,41 +142,44 @@ class DQN():
     # -------------------------------------------------------------------------------------------------
 
     def creat_net(self):  # 创建tensorflow的图，用来直接逼出一个Q的网络价值函数
-        self.img_input = tf.placeholder(dtype=tf.float32, shape=[None, IMG_WIDTH, IMG_HEIGHT, IMG_TIME_LONG])
-        self.y_input = tf.placeholder(dtype=tf.float32, shape=[None])
-        self.action_input = tf.placeholder(dtype=tf.float32, shape=[None, self.action_dim])
+        INPUT_DEPTH = SERIES_LENGTH
+        self.input_layer = tf.placeholder(tf.float32, [None, CNN_INPUT_WIDTH, CNN_INPUT_HEIGHT, INPUT_DEPTH],
+                                          name='status-input')
+        self.action_input = tf.placeholder(tf.float32, [None, self.action_dim])
+        self.y_input = tf.placeholder(tf.float32, [None])
 
-        w1 = self.get_weights([8, 8, 4, 32])
+        W1 = self.get_weights([8, 8, 4, 32])
         b1 = self.get_bias([32])
-        h_conv1 = tf.nn.relu(tf.nn.conv2d(self.img_input, w1, [1, 4, 4, 1], padding="SAME") + b1)
-        conv1 = tf.nn.max_pool(h_conv1, [1, 2, 2, 1], [1, 2, 2, 1], padding="SAME")
-        print("conv1.shape",conv1.shape)
-        w2 = self.get_weights([4, 4, 32, 64])
+        h_conv1 = tf.nn.relu(tf.nn.conv2d(self.input_layer, W1, strides=[1, 4, 4, 1], padding='SAME') + b1)
+        conv1 = tf.nn.max_pool(h_conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+
+        W2 = self.get_weights([4, 4, 32, 64])
         b2 = self.get_bias([64])
-        h_conv2 = tf.nn.relu(tf.nn.conv2d(conv1, w2, [1, 2, 2, 1], padding="SAME") + b2)
-        print("h_conv2.shape",h_conv2.shape)
-        #h_conv2 = tf.nn.max_pool(h_conv2, [1, 2, 2, 1], [1, 2, 2, 1], padding="SAME")
-        #print("h_conv2_after_max_pool.shape", h_conv2.shape)
+        h_conv2 = tf.nn.relu(tf.nn.conv2d(conv1, W2, strides=[1, 2, 2, 1], padding='SAME') + b2)
+        # conv2 = tf.nn.max_pool( h_conv2, ksize = [ 1, 2, 2, 1 ], strides= [ 1, 2, 2, 1 ], padding= 'SAME' )
 
-        w3 = self.get_weights([3, 3, 64, 64])
+        W3 = self.get_weights([3, 3, 64, 64])
         b3 = self.get_bias([64])
-        h_conv3 = tf.nn.relu(tf.nn.conv2d(h_conv2, w3, [1, 1, 1, 1], padding="SAME") + b3)
-        print("h_conv3.shape", h_conv3.shape)
-        w_fc1 = self.get_weights([1600, 512])
+        h_conv3 = tf.nn.relu(tf.nn.conv2d(h_conv2, W3, strides=[1, 1, 1, 1], padding='SAME') + b3)
+
+        W_fc1 = self.get_weights([1600, 512])
         b_fc1 = self.get_bias([512])
-        conv3_flat = tf.reshape(h_conv3, [-1,1600])
-        print("conv3_flat.shape", conv3_flat.shape)
-        h_fc1 = tf.nn.relu(tf.matmul(conv3_flat, w_fc1) + b_fc1)
+        # h_conv2_flat = tf.reshape( h_conv2, [ -1, 11 * 11 * 32 ] )
 
-        w_fc2 = self.get_weights([512, self.action_dim])
+        conv3_flat = tf.reshape(h_conv3, [-1, 1600])
+
+        h_fc1 = tf.nn.relu(tf.matmul(conv3_flat, W_fc1) + b_fc1)
+
+        W_fc2 = self.get_weights([512, self.action_dim])
         b_fc2 = self.get_bias([self.action_dim])
+        self.Q_value = tf.matmul(h_fc1, W_fc2) + b_fc2
 
-        self.Q_value = tf.matmul(h_fc1, w_fc2) + b_fc2  # 直到这里，拿到的只是一个图像的识别结果抽象，带action的二维矩阵 当作是价值函数
-        Q_action = tf.reduce_sum(tf.multiply(self.Q_value, self.action_input), reduction_indices=1)  # 这个是动作价值函数
-        self.cost = tf.reduce_mean(tf.square(self.y_input - Q_action))  # y_input 就是最佳策略得分，就是回报，来自于马尔可夫过程结果，这里就是让输出不断的毕竟最佳策略得分
+        Q_action = tf.reduce_sum(tf.multiply(self.Q_value,
+                                             self.action_input), reduction_indices=1)
+
+        self.cost = tf.reduce_mean(tf.square(self.y_input - Q_action))
 
         self.optimizer = tf.train.AdamOptimizer(1e-6).minimize(self.cost)
-        print("创建了一个网络")
 
     # -------------------------------------------------------------------------------------------------
 
@@ -173,8 +191,8 @@ class DQN():
         mini_reward = [data[3] for data in minibatch]
         mini_done = [data[4] for data in minibatch]
         total_Q = []
-        next_Q_value = self.Q_value.eval(feed_dict={self.img_input: mini_next_state})
-
+        next_Q_value = self.Q_value.eval(feed_dict={self.input_layer: mini_next_state})
+        print(next_Q_value)
         for i in range(Batch_size):
             if mini_done[i]:
                 total_Q.append(mini_reward[i])
@@ -184,7 +202,7 @@ class DQN():
                 # print("记录贝尔曼，",np.argmax(next_Q_value[i]))
                 # print(np.shape(total_Q))
         self.optimizer.run(feed_dict={
-            self.img_input: mini_state,
+            self.input_layer: mini_state,
             self.action_input: mini_action,
             self.y_input: total_Q
         })
@@ -194,7 +212,7 @@ class DQN():
 
     def get_greedy_action(self, state):
         #state = np.reshape(state,[1,IMG_WIDTH,IMG_HEIGHT,IMG_TIME_LONG])
-        action = self.Q_value.eval(feed_dict={self.img_input: [state]})[0]
+        action = self.Q_value.eval(feed_dict={self.input_layer: [state]})[0]
         print(action,np.argmax(action))
         #print("no[0]",self.Q_value.eval(feed_dict={self.img_input: state}),np.argmax(self.Q_value.eval(feed_dict={self.img_input: state})))
         return np.argmax(action)
@@ -255,7 +273,7 @@ def main():
     round_10_reward = 0
     round_time_start = pytime.time()  # --------------------------------------------获取本局开始时间
     state_with_4times = None
-    state_with_4times = None
+    next_state_with_4times = None
 
     for rounds in range(100000000000000):
 
@@ -268,10 +286,11 @@ def main():
             evn.render() #是否显示画面
             action = agent.get_action(state_with_4times)
             next_state, reward, done, _ = evn.step(action)
-            next_state = ColorMat2Binary(next_state)
-            next_state = np.reshape(next_state, [IMG_WIDTH, IMG_HEIGHT, 1])
-            next_state_with_4times = np.append(next_state,state_with_4times[:, :, :3],  axis=2)  # 记录时序状态
+            next_state = np.reshape(ColorMat2Binary(next_state),(80,80,1))
+            next_state_with_4times = np.append(next_state, state_with_4times[:, :, :3], axis=2)
+
             agent.percieve(state_with_4times, action, next_state_with_4times, reward, done, times)
+
             state_with_4times = next_state_with_4times #更新输入状态
             round_reward += reward
             round_10_reward += reward
