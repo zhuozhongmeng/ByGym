@@ -21,7 +21,7 @@ IMG_TIME_LONG = 4  # 图像时序长度
 INI_EPSILON = 1 #初始随机探索比例
 FINAL_EPSILON = 0.0001 #最终随机探索比例
 OBSEVER_TIMES = 500 #一开始随便玩的次数
-TIMES_PER_ROUNDS = 1500 #限制每局最高动作数
+TIMES_PER_ROUNDS = 2500 #限制每局最高动作数
 totalreward = 0
 # init Variable 定义及初始化一些全局变量
 view_total_reward = []  # 观察总得分分布
@@ -61,13 +61,13 @@ def ColorMat2Binary(state):
 
 def show_plt():
     plt.plot(range(len(view_total_reward)),view_total_reward,'.')
-    plt.savefig("breakout8080/10round1.png", dpi=1000)
+    plt.savefig("breakout8080/10round2.png", dpi=1000)
     plt.close()
     plt.plot(range(len(view_best_reward)),view_best_reward,'.')
-    plt.savefig("breakout8080/best1.png",dpi=1000)
+    plt.savefig("breakout8080/best2.png",dpi=1000)
     plt.close()
     plt.plot(range(len(times_list)), times_list, '.')
-    plt.savefig("breakout8080/timeslist1.png", dpi=1000)
+    plt.savefig("breakout8080/timeslist2.png", dpi=1000)
     plt.close()
 
 # -------------------------------------------------------------------------------------------------
