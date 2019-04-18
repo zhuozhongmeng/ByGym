@@ -20,8 +20,8 @@ IMG_DEPTH = 1 #图像深度
 IMG_TIME_LONG = 4  # 图像时序长度
 INI_EPSILON = 1 #初始随机探索比例
 FINAL_EPSILON = 0.0001 #最终随机探索比例
-OBSEVER_TIMES = 500 #一开始随便玩的次数
-TIMES_PER_ROUNDS = 2500 #限制每局最高动作数
+OBSEVER_TIMES = 40000 #一开始随便玩的次数
+TIMES_PER_ROUNDS = 3500 #限制每局最高动作数
 totalreward = 0
 # init Variable 定义及初始化一些全局变量
 view_total_reward = []  # 观察总得分分布
@@ -61,13 +61,13 @@ def ColorMat2Binary(state):
 
 def show_plt():
     plt.plot(range(len(view_total_reward)),view_total_reward,'.')
-    plt.savefig("breakout8080/10round2.png", dpi=1000)
+    plt.savefig("breakout8080/10round4.png", dpi=1000)
     plt.close()
     plt.plot(range(len(view_best_reward)),view_best_reward,'.')
-    plt.savefig("breakout8080/best2.png",dpi=1000)
+    plt.savefig("breakout8080/best4.png",dpi=1000)
     plt.close()
     plt.plot(range(len(times_list)), times_list, '.')
-    plt.savefig("breakout8080/timeslist2.png", dpi=1000)
+    plt.savefig("breakout8080/timeslist4.png", dpi=1000)
     plt.close()
 
 # -------------------------------------------------------------------------------------------------
@@ -93,7 +93,7 @@ class DQN():
         self.m_times = 0
         self.mm_reward = 1
         self.temprandomtimes = 0
-        self.getaction = 0
+        self.getaction = 10000
         self.nowreward = 0
 
     # -------------------------------------------------------------------------------------------------
@@ -207,7 +207,7 @@ class DQN():
         #if self.get_action_times < 999999999:
         #    self.get_action_times += 1
        # random_area = 1 - self.get_action_times * 0.000000001
-        if random.random() > 1 - (self.getaction + self.nowreward /100) /10031:
+        if random.random() > 1 - (self.getaction + self.nowreward /100) /10011:
             get_action_time_start = pytime.time()
             action = self.get_greedy_action(state)
             get_action_time_end = pytime.time()
@@ -285,16 +285,18 @@ def main():
 
         if round_reward > best_reward:
             best_reward = round_reward
-        print(done)
-        print(rounds,"局得分", round_reward,'|',round_10_reward,"分|有",times,'次动作',datetime.datetime.now())
+        #print(done)
+        print(round_reward,'[',times,']',end='')
         times_list.append(times)
         round_reward = 0
 
         if rounds % 10 == 0:
             round_time_end = pytime.time()  # ------------------------------------------获取本局结束时间
+            print("")
             print(rounds, "局得分：", round_10_reward, "分，最高", best_reward, "分，训练",
                   agent.show_randomtimes(), "，用时", agent.training_time, "秒,判断用", agent.get_action_time, "秒,总用：",
                   round_time_end - round_time_start, "秒,memoryusing",len(agent.memory),datetime.datetime.now())
+            print('-----------------------------------------------------------------------------',end="")
             view_total_reward.append(round_10_reward)
             view_best_reward.append(best_reward)
             agent.nowreward = round_10_reward
